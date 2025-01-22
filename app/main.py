@@ -6,15 +6,20 @@ REDIS_PORT = 6379
 
 
 async def client_connected_cb(reader, writer):
+    addr = writer.get_extra_info('peername')
+    print(f"[{addr!r}] New connection")
     while True:
         recv_message = (await reader.read(100)).decode()
-        addr = writer.get_extra_info('peername')
-        print(f"Received {recv_message!r} from {addr!r}")
+        print(f"[{addr!r}] Recv {recv_message!r}")
 
         send_message = "+PONG\r\n"
-        print(f"Send: {send_message!r}")
+        print(f"[{addr!r}] Send {send_message!r}")
         writer.write(send_message.encode())
         await writer.drain()
+
+    print(f"[{addr!r}] Closing connection")
+    writer.close()
+    await writer.wait_closed()
 
 
 async def run_server():
