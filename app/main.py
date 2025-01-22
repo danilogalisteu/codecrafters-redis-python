@@ -1,28 +1,49 @@
 import asyncio
-import socket  # noqa: F401
+from enum import StrEnum
 
 
 REDIS_PORT = 6379
 
 
+class IDSimple(StrEnum):
+    STRING = '+'
+    ERROR = '-'
+    INTEGER = ':'
+    NULL = '_'
+    BOOLEAN = '#'
+    DOUBLE = ','
+    BIGNUM = '('
+
+
+class IDAggregate(StrEnum):
+    BSTRING = '$'
+    ARRAY = '*'
+    BERROR = '!'
+    VERBATIM = '='
+    MAP = '%'
+    ATTRIBUTE = '`'
+    SET = '~'
+    PUSH = '>'
+
+
 async def parse_redis(message: str):
     recv_id = message[0]
-    if recv_id in "+-:_#,()":
-        # simple message
-        assert message[-2:] == "\r\n"
-        payload = message[1:-2]
+    assert message[-2:] == "\r\n"
+    payload = message[:-2]
+
+    if recv_id in IDSimple:
         match recv_id:
             case "+":
-                print("received string", payload)
+                print("recv", recv_id, IDSimple(recv_id).name, payload[1:])
             case _:
-                print("unhandled simple id", recv_id, payload)
-    else:
-        # aggregate message
-        assert message[-2:] == "\r\n"
-        payload = message[:-2]
+                print("recv unhandled simple id", payload)
+
+    elif recv_id in IDAggregate:
         values = payload.split("\r\n")
         print("received aggregate", values)
 
+    else:
+        print("unknown redis ID", recv_id)
 
 async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
