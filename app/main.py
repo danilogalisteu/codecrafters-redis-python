@@ -17,7 +17,7 @@ async def client_connected_cb(reader, writer):
 
     recv_message = ""
     while True:
-        await asyncio.sleep(0)
+        await asyncio.sleep(0.1)
         recv_message += (await reader.read(100)).decode()
 
         if len(recv_message) > 0:
