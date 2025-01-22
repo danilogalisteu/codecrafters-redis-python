@@ -17,7 +17,7 @@ async def client_connected_cb(reader, writer):
     while True:
         recv_message = (await reader.read(100)).decode()
         print(f"[{addr!r}] Recv {recv_message!r}")
-        data = parse_redis(recv_message)
+        parse_redis(recv_message)
 
         send_message = "+PONG\r\n"
         print(f"[{addr!r}] Send {send_message!r}")
