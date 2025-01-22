@@ -6,8 +6,22 @@ REDIS_PORT = 6379
 
 
 async def parse_redis(message: str):
-    values = message.split("\r\n")
-    print(values)
+    recv_id = message[0]
+    if recv_id in "+-:_#,()":
+        # simple message
+        assert message[-2:] == "\r\n"
+        payload = message[1:-2]
+        match recv_id:
+            case "+":
+                print("received string", payload)
+            case _:
+                print("unhandled simple id", recv_id, payload)
+    else:
+        # aggregate message
+        assert message[-2:] == "\r\n"
+        payload = message[:-2]
+        values = payload.split("\r\n")
+        print("received string", values)
 
 
 async def client_connected_cb(reader, writer):
