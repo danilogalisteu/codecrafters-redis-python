@@ -14,7 +14,7 @@ async def client_connected_cb(reader, writer):
 
     response = "+PONG\r\n"
     print(f"Send: {response!r}")
-    writer.write(bytes(response))
+    writer.write(response.encode())
     await writer.drain()
 
     print("Close the connection")
