@@ -1,49 +1,52 @@
 import asyncio
-from enum import StrEnum
 
-
+from .redis import REDIS_SEPARATOR, IDSimple, IDAggregate, decode_simple
 REDIS_PORT = 6379
 
 
-class IDSimple(StrEnum):
-    STRING = '+'
-    ERROR = '-'
-    INTEGER = ':'
-    NULL = '_'
-    BOOLEAN = '#'
-    DOUBLE = ','
-    BIGNUM = '('
+def decode_redis(message, message_counter):
+    data = message[message_counter]
 
+    recv_id = data[0]
+    value = data[1:]
 
-class IDAggregate(StrEnum):
-    BSTRING = '$'
-    ARRAY = '*'
-    BERROR = '!'
-    VERBATIM = '='
-    MAP = '%'
-    ATTRIBUTE = '`'
-    SET = '~'
-    PUSH = '>'
+    if recv_id in IDSimple:
+        return decode_simple(recv_id, value), message_counter + 1
+
+    match recv_id:
+        case IDAggregate.BSTRING:
+            bstr_length = int(value)
+            assert len(message[message_counter+1:]) >= 1
+            message_counter += 1
+            bstr_value = message[message_counter]
+            assert bstr_length == len(bstr_value)
+            return bstr_value, message_counter + 1
+
+        case IDAggregate.ARRAY:
+            array_length = int(value)
+            assert len(message[message_counter+1:]) >= array_length
+            array_res = []
+            for _ in range(array_length):
+                message_counter += 1
+                array_value, message_counter = decode_redis(message, message_counter)
+                array_res.append(array_value)
+            return array_res
+
+        case _:
+            print("unknown redis ID", recv_id)
 
 
 async def parse_redis(message: str):
-    recv_id = message[0]
-    assert message[-2:] == "\r\n"
-    payload = message[:-2]
+    assert message[-2:] == REDIS_SEPARATOR
+    message = message[:-2]
 
-    if recv_id in IDSimple:
-        match recv_id:
-            case "+":
-                print("recv", recv_id, IDSimple(recv_id).name, payload[1:])
-            case _:
-                print("recv unhandled simple id", payload)
+    message = message.split(REDIS_SEPARATOR)
+    print(message)
 
-    elif recv_id in IDAggregate:
-        values = payload.split("\r\n")
-        print("received aggregate", values)
+    values, msg_end = decode_redis(message, 0)
+    print(msg_end, values)
 
-    else:
-        print("unknown redis ID", recv_id)
+
 
 async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
