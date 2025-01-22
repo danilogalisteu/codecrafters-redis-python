@@ -6,7 +6,7 @@ REDIS_PORT = 6379
 
 
 async def client_connected_cb(reader, writer):
-    data = await reader.read()
+    data = await reader.read(100)
     print(f"Received {data}")
     message = data.decode()
     addr = writer.get_extra_info('peername')
