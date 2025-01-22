@@ -5,12 +5,19 @@ import socket  # noqa: F401
 REDIS_PORT = 6379
 
 
+async def parse_redis(message: str):
+    values = message.split("\r\n")
+    print(values)
+
+
 async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
     print(f"[{addr!r}] New connection")
+
     while True:
         recv_message = (await reader.read(100)).decode()
         print(f"[{addr!r}] Recv {recv_message!r}")
+        data = parse_redis(recv_message)
 
         send_message = "+PONG\r\n"
         print(f"[{addr!r}] Send {send_message!r}")
