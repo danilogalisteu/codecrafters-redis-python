@@ -109,3 +109,28 @@ def decode_redis(message, message_counter=0):
 
         case _:
             raise ValueError("unknown redis ID", recv_id)
+
+
+def encode_redis(value) -> str:
+    print("new encode", value)
+    if isinstance(value, str):
+        return IDAggregate.BSTRING + str(len(value)) + REDIS_SEPARATOR + value
+    if isinstance(value, int):
+        return IDSimple.INTEGER + str(value)
+    if value is None:
+        return IDSimple.NULL
+    if isinstance(value, bool):
+        return IDSimple.BOOLEAN + ("t" if value else "f")
+    if isinstance(value, float):
+        return IDSimple.DOUBLE + str(value)
+    if isinstance(value, Decimal):
+        return IDSimple.BIGNUM + str(value)
+    if isinstance(value, list):
+        header = IDAggregate.ARRAY + str(len(value))
+        data = [encode_redis(array_value) for array_value in value]
+        return REDIS_SEPARATOR.join([header] + data)
+    if isinstance(value, dict):
+        header = IDAggregate.MAP + str(len(value))
+        data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
+        return REDIS_SEPARATOR.join([header] + data)
+    raise ValueError("unhandled redis encoding type", type(value))
