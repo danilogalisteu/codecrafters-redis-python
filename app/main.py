@@ -1,66 +1,60 @@
 import asyncio
 
-from .redis import REDIS_SEPARATOR, IDSimple, IDAggregate, decode_simple
+from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
+
+
 REDIS_PORT = 6379
 
 
-def decode_redis(message, message_counter):
-    data = message[message_counter]
-
-    recv_id = data[0]
-    value = data[1:]
-
-    if recv_id in IDSimple:
-        return decode_simple(recv_id, value), message_counter + 1
-
-    match recv_id:
-        case IDAggregate.BSTRING:
-            bstr_length = int(value)
-            assert len(message[message_counter+1:]) >= 1
-            message_counter += 1
-            bstr_value = message[message_counter]
-            assert bstr_length == len(bstr_value)
-            return bstr_value, message_counter + 1
-
-        case IDAggregate.ARRAY:
-            array_length = int(value)
-            assert len(message[message_counter+1:]) >= array_length
-            array_res = []
-            for _ in range(array_length):
-                message_counter += 1
-                array_value, message_counter = decode_redis(message, message_counter)
-                array_res.append(array_value)
-            return array_res
-
-        case _:
-            print("unknown redis ID", recv_id)
-
-
 async def parse_redis(message: str):
-    assert message[-2:] == REDIS_SEPARATOR
-    message = message[:-2]
-
-    message = message.split(REDIS_SEPARATOR)
-    print(message)
-
-    values, msg_end = decode_redis(message, 0)
-    print(msg_end, values)
-
+    print(f"new parse{message!r}")
+    return decode_redis(message)
 
 
 async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
     print(f"[{addr!r}] New connection")
 
+    recv_message = ""
     while True:
-        recv_message = (await reader.read(100)).decode()
-        print(f"[{addr!r}] Recv {recv_message!r}")
-        await parse_redis(recv_message)
+        await asyncio.sleep(0)
+        recv_message += (await reader.read(100)).decode()
 
-        send_message = "+PONG\r\n"
-        print(f"[{addr!r}] Send {send_message!r}")
-        writer.write(send_message.encode())
-        await writer.drain()
+        if len(recv_message) > 0:
+            print(f"[{addr!r}] Recv {recv_message!r}")
+            command_line, parsed_length = await parse_redis(recv_message)
+            print("buffer", parsed_length, len(recv_message), recv_message)
+            recv_message = recv_message[parsed_length:]
+            print("new buffer", 0, len(recv_message), recv_message)
+
+            print(f"[{addr!r}] Command line {command_line} ({parsed_length})")
+            command = command_line[0]
+            arguments = command_line[1:] if len(command_line) > 0 else []
+
+            send_message = ""
+            match command.upper():
+                case "QUIT":
+                    break
+                case "PING":
+                    if arguments:
+                        if len(arguments) == 1:
+                            send_message = encode_redis(arguments[0])
+                        else:
+                            send_message = "-ERR wrong number of arguments for 'ping' command"
+                    else:
+                        send_message = "+PONG"
+                case "ECHO":
+                    if len(arguments) == 1:
+                        send_message = encode_redis(arguments[0])
+                    else:
+                        send_message = "-ERR wrong number of arguments for 'echo' command"
+                case _:
+                    print("unhandled command")
+
+            send_message += REDIS_SEPARATOR
+            print(f"[{addr!r}] Send {send_message!r}")
+            writer.write(send_message.encode())
+            await writer.drain()
 
     print(f"[{addr!r}] Closing connection")
     writer.close()
@@ -84,9 +78,6 @@ async def run_server():
 def main():
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!")
-
-    # server_socket = socket.create_server(("localhost", REDIS_PORT), reuse_port=True)
-    # server_socket.accept() # wait for client
 
     asyncio.run(run_server())
 
