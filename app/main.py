@@ -21,7 +21,7 @@ async def parse_redis(message: str):
         assert message[-2:] == "\r\n"
         payload = message[:-2]
         values = payload.split("\r\n")
-        print("received string", values)
+        print("received aggregate", values)
 
 
 async def client_connected_cb(reader, writer):
