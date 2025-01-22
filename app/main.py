@@ -27,7 +27,6 @@ async def run_server():
         client_connected_cb,
         host="localhost",
         port=REDIS_PORT,
-        reuse_port=True,
     )
 
     addrs = ', '.join(str(sock.getsockname()) for sock in redis_server.sockets)
