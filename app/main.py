@@ -11,9 +11,9 @@ async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
     print(f"Received {data} {message!r} from {addr!r}")
 
-    response = r"+PONG\r\n"
+    response = "+PONG\r\n"
     print(f"Send: {response!r}")
-    writer.write(response)
+    writer.write(response.encode())
     await writer.drain()
 
     print("Close the connection")
@@ -42,8 +42,6 @@ def main():
 
     # server_socket = socket.create_server(("localhost", REDIS_PORT), reuse_port=True)
     # server_socket.accept() # wait for client
-
-    address = ("localhost", REDIS_PORT)
 
     asyncio.run(run_server())
 
