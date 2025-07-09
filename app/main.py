@@ -4,6 +4,7 @@ from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 
 REDIS_PORT = 6379
+REDIS_DB = {}
 
 
 async def parse_redis(message: str):
@@ -48,6 +49,21 @@ async def client_connected_cb(reader, writer):
                         send_message = encode_redis(arguments[0])
                     else:
                         send_message = "-ERR wrong number of arguments for 'echo' command"
+                case "SET":
+                    if len(arguments) != 2:
+                        send_message = "-ERR wrong number of arguments for 'set' command"
+                    else:
+                        set_key = arguments[0]
+                        set_value = arguments[1]
+                        REDIS_DB[set_key] = set_value
+                        send_message = encode_redis("OK")
+                case "GET":
+                    if len(arguments) != 1:
+                        send_message = "-ERR wrong number of arguments for 'get' command"
+                    else:
+                        get_key = arguments[0]
+                        get_value = REDIS_DB.get(get_key, "")
+                        send_message = encode_redis(get_value)
                 case _:
                     print("unhandled command")
 
