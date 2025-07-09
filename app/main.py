@@ -1,4 +1,5 @@
 import asyncio
+from time import time_ns
 
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
@@ -50,20 +51,33 @@ async def client_connected_cb(reader, writer):
                     else:
                         send_message = "-ERR wrong number of arguments for 'echo' command"
                 case "SET":
-                    if len(arguments) != 2:
+                    if len(arguments) < 2:
                         send_message = "-ERR wrong number of arguments for 'set' command"
                     else:
                         set_key = arguments[0]
                         set_value = arguments[1]
-                        REDIS_DB[set_key] = set_value
+                        set_dict = {"value": set_value, "exp": None}
+                        REDIS_DB[set_key] = set_dict
                         send_message = encode_redis("OK")
+
                 case "GET":
                     if len(arguments) != 1:
                         send_message = "-ERR wrong number of arguments for 'get' command"
                     else:
                         get_key = arguments[0]
-                        get_value = REDIS_DB.get(get_key, "")
-                        send_message = encode_redis(get_value)
+                        get_dict = REDIS_DB.get(get_key, {})
+                        get_exp = get_dict.get("exp", None)
+                        if get_exp is not None:
+                            get_time = time_ns()
+                            if get_exp < get_time:
+                                del REDIS_DB[get_key]
+                                send_message = encode_redis("")
+                            else:
+                                get_value = get_dict.get("value", "")
+                                send_message = encode_redis(get_value)
+                        else:
+                            get_value = get_dict.get("value", "")
+                            send_message = encode_redis(get_value)
                 case _:
                     print("unhandled command")
 
