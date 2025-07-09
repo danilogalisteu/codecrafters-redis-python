@@ -57,8 +57,51 @@ async def client_connected_cb(reader, writer):
                         set_key = arguments[0]
                         set_value = arguments[1]
                         set_dict = {"value": set_value, "exp": None}
-                        REDIS_DB[set_key] = set_dict
-                        send_message = encode_redis("OK")
+                        if len(arguments) == 2:
+                            REDIS_DB[set_key] = set_dict
+                            send_message = encode_redis("OK")
+                        else:
+                            options = arguments[2:]
+                            opt_counter = 0
+                            while opt_counter < len(options):
+                                opt_cmd = options[opt_counter].upper()
+                                match opt_cmd:
+                                    case "EX":
+                                        opt_counter += 1
+                                        if opt_counter < len(options):
+                                            opt_arg = int(options[opt_counter])
+                                            set_time = time_ns()
+                                            set_dict["exp"] = set_time + opt_arg * 1e9
+                                            REDIS_DB[set_key] = set_dict
+                                            send_message = encode_redis("OK")
+                                            opt_counter += 1
+                                    case "EXAT":
+                                        opt_counter += 1
+                                        if opt_counter < len(options):
+                                            opt_arg = int(options[opt_counter])
+                                            set_dict["exp"] = opt_arg * 1e9
+                                            REDIS_DB[set_key] = set_dict
+                                            send_message = encode_redis("OK")
+                                            opt_counter += 1
+                                    case "PX":
+                                        opt_counter += 1
+                                        if opt_counter < len(options):
+                                            opt_arg = int(options[opt_counter])
+                                            set_time = time_ns()
+                                            set_dict["exp"] = set_time + opt_arg * 1e6
+                                            REDIS_DB[set_key] = set_dict
+                                            send_message = encode_redis("OK")
+                                            opt_counter += 1
+                                    case "PXAT":
+                                        opt_counter += 1
+                                        if opt_counter < len(options):
+                                            opt_arg = int(options[opt_counter])
+                                            set_dict["exp"] = opt_arg * 1e6
+                                            REDIS_DB[set_key] = set_dict
+                                            send_message = encode_redis("OK")
+                                            opt_counter += 1
+                                    case _:
+                                        print("unhandled option", opt_cmd)
 
                 case "GET":
                     if len(arguments) != 1:
