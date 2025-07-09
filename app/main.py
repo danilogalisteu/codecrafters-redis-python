@@ -2,7 +2,7 @@ import asyncio
 import logging
 from time import time_ns
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.WARNING)
 
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
