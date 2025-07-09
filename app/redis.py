@@ -114,6 +114,8 @@ def decode_redis(message, message_counter=0):
 def encode_redis(value) -> str:
     print("new encode", value)
     if isinstance(value, str):
+        if len(value) == 0:
+            return IDAggregate.BSTRING + "-1"
         return IDAggregate.BSTRING + str(len(value)) + REDIS_SEPARATOR + value
     if isinstance(value, int):
         return IDSimple.INTEGER + str(value)
