@@ -1,5 +1,8 @@
 import asyncio
+import logging
 from time import time_ns
+
+logging.basicConfig(level=logging.INFO)
 
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
@@ -9,13 +12,13 @@ REDIS_DB = {}
 
 
 async def parse_redis(message: str):
-    print(f"new parse {message!r}")
+    logging.debug(f"new parse {message!r}")
     return decode_redis(message)
 
 
 async def client_connected_cb(reader, writer):
     addr = writer.get_extra_info('peername')
-    print(f"[{addr!r}] New connection")
+    logging.info(f"[{addr!r}] New connection")
 
     recv_message = ""
     while True:
@@ -23,13 +26,13 @@ async def client_connected_cb(reader, writer):
         recv_message += (await reader.read(100)).decode()
 
         if len(recv_message) > 0:
-            print(f"[{addr!r}] Recv {recv_message!r}")
+            logging.info(f"[{addr!r}] Recv {recv_message!r}")
             command_line, parsed_length = await parse_redis(recv_message)
-            print("buffer", parsed_length, len(recv_message), recv_message)
+            logging.debug("buffer %d %d %s", parsed_length, len(recv_message), recv_message)
             recv_message = recv_message[parsed_length:]
-            print("new buffer", 0, len(recv_message), recv_message)
+            logging.debug("new buffer %d %d %s", 0, len(recv_message), recv_message)
 
-            print(f"[{addr!r}] Command line {command_line} ({parsed_length})")
+            logging.info(f"[{addr!r}] Command line {command_line} ({parsed_length})")
             command = command_line[0]
             arguments = command_line[1:] if len(command_line) > 0 else []
 
@@ -101,7 +104,7 @@ async def client_connected_cb(reader, writer):
                                             send_message = encode_redis("OK")
                                             opt_counter += 1
                                     case _:
-                                        print("unhandled option", opt_cmd)
+                                        logging.warning("unhandled option %s", opt_cmd)
 
                 case "GET":
                     if len(arguments) != 1:
@@ -122,14 +125,14 @@ async def client_connected_cb(reader, writer):
                             get_value = get_dict.get("value", "")
                             send_message = encode_redis(get_value)
                 case _:
-                    print("unhandled command")
+                    logging.warning("unhandled command %s", command)
 
             send_message += REDIS_SEPARATOR
-            print(f"[{addr!r}] Send {send_message!r}")
+            logging.info(f"[{addr!r}] Send {send_message!r}")
             writer.write(send_message.encode())
             await writer.drain()
 
-    print(f"[{addr!r}] Closing connection")
+    logging.info(f"[{addr!r}] Closing connection")
     writer.close()
     await writer.wait_closed()
 
@@ -142,16 +145,13 @@ async def run_server():
     )
 
     addrs = ', '.join(str(sock.getsockname()) for sock in redis_server.sockets)
-    print(f'Serving on {addrs}')
+    logging.info(f'Serving on {addrs}')
 
     async with redis_server:
         await redis_server.serve_forever()
 
 
 def main():
-    # You can use print statements as follows for debugging, they'll be visible when running tests.
-    print("Logs from your program will appear here!")
-
     asyncio.run(run_server())
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import logging
 from decimal import Decimal
 from enum import StrEnum
 
@@ -28,7 +29,7 @@ class IDAggregate(StrEnum):
 
 
 def decode_simple(recv_id: str, value: str):
-    print("new simple", recv_id, value)
+    logging.debug("new simple %s %s", recv_id, value)
     match recv_id:
         case IDSimple.STRING:
             return value
@@ -50,7 +51,7 @@ def decode_simple(recv_id: str, value: str):
 
 
 def decode_redis(message, message_counter=0):
-    print(f"new decode {message!r} {message_counter}")
+    logging.debug(f"new decode {message!r} {message_counter}")
 
     recv_id = message[message_counter]
 
@@ -73,7 +74,7 @@ def decode_redis(message, message_counter=0):
             bstr_value = message[message_counter:message_next]
             assert message_next == message_counter + bstr_length
             message_counter = message_next + REDIS_SEPARATOR_LENGTH
-            print("new bstr_value", bstr_value)
+            logging.debug("new bstr_value %s", bstr_value)
             return bstr_value, message_counter
 
         case IDAggregate.ARRAY:
@@ -84,11 +85,11 @@ def decode_redis(message, message_counter=0):
             array_length = int(value_next)
 
             array_res = []
-            print("new array, length", array_length, len(array_res), message_counter, message)
+            logging.debug("new array, length %d %d %d %s", array_length, len(array_res), message_counter, message)
             while len(array_res) < array_length:
                 array_value, message_counter = decode_redis(message, message_counter)
                 array_res.append(array_value)
-                print("new array_value", array_length, len(array_res), message_counter, array_value)
+                logging.debug("new array_value %d %d %d %s", array_length, len(array_res), message_counter, array_value)
 
             return array_res, message_counter
 
@@ -100,19 +101,19 @@ def decode_redis(message, message_counter=0):
             map_length = int(value_next)
 
             map_res = {}
-            print("new map, length", map_length, len(map_res), message_counter, message)
+            logging.debug("new map, length %d %d %d %s", map_length, len(map_res), message_counter, message)
             while len(map_res) < map_length:
                 map_key, message_counter = decode_redis(message, message_counter)
                 map_value, message_counter = decode_redis(message, message_counter)
                 map_res[map_key] = map_value
-                print("new map item", map_length, len(map_res), message_counter, map_key, map_value)
+                logging.debug("new map item", map_length, len(map_res), message_counter, map_key, map_value)
 
         case _:
             raise ValueError("unknown redis ID", recv_id)
 
 
 def encode_redis(value) -> str:
-    print("new encode", value)
+    logging.debug("new encode %s", str(value))
     if isinstance(value, str):
         if len(value) == 0:
             return IDAggregate.BSTRING + "-1"
