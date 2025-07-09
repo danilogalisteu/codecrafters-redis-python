@@ -7,7 +7,7 @@ REDIS_PORT = 6379
 
 
 async def parse_redis(message: str):
-    print(f"new parse{message!r}")
+    print(f"new parse {message!r}")
     return decode_redis(message)
 
 
