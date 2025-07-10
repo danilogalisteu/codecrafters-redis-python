@@ -1,23 +1,29 @@
+import argparse
 import asyncio
 import logging
+from typing import Any
 
-from .database import set_value, get_value
+from .database import get_value, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
-
-logging.basicConfig(format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING)
+logging.basicConfig(
+    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING
+)
 
 REDIS_PORT = 6379
 
 
-async def parse_redis(message: str):
-    logging.debug(f"new parse {message!r}")
+async def parse_redis(message: str) -> tuple[Any, int]:
+    logging.debug("new parse %s", repr(message))
     return decode_redis(message)
 
 
-async def client_connected_cb(reader, writer):
-    addr = writer.get_extra_info('peername')
-    logging.info(f"[{addr!r}] New connection")
+async def client_connected_cb(
+    reader: asyncio.StreamReader,
+    writer: asyncio.StreamWriter,
+) -> None:
+    addr = writer.get_extra_info("peername")
+    logging.info("[%s] New connection", str(addr))
 
     recv_message = ""
     while True:
@@ -25,13 +31,18 @@ async def client_connected_cb(reader, writer):
         recv_message += (await reader.read(100)).decode()
 
         if len(recv_message) > 0:
-            logging.info(f"[{addr!r}] Recv {recv_message!r}")
+            logging.info("[%s] Recv %s", str(addr), repr(recv_message))
             command_line, parsed_length = await parse_redis(recv_message)
-            logging.debug("buffer %d %d %s", parsed_length, len(recv_message), recv_message)
+            logging.debug(
+                "buffer %d %d %s",
+                parsed_length,
+                len(recv_message),
+                recv_message,
+            )
             recv_message = recv_message[parsed_length:]
             logging.debug("new buffer %d %d %s", 0, len(recv_message), recv_message)
 
-            logging.info(f"[{addr!r}] Command line {command_line} ({parsed_length})")
+            logging.info("[%s] Command line %s (%d)", str(addr), str(command_line), parsed_length)
             command = command_line[0].upper()
             arguments = command_line[1:] if len(command_line) > 0 else []
 
@@ -44,23 +55,35 @@ async def client_connected_cb(reader, writer):
                         if len(arguments) == 1:
                             send_message = encode_redis(arguments[0])
                         else:
-                            send_message = "-ERR wrong number of arguments for 'ping' command"
+                            send_message = (
+                                "-ERR wrong number of arguments for 'ping' command"
+                            )
                     else:
                         send_message = "+PONG"
                 case "ECHO":
                     if len(arguments) == 1:
                         send_message = encode_redis(arguments[0])
                     else:
-                        send_message = "-ERR wrong number of arguments for 'echo' command"
+                        send_message = (
+                            "-ERR wrong number of arguments for 'echo' command"
+                        )
                 case "SET":
                     if len(arguments) < 2:
-                        send_message = "-ERR wrong number of arguments for 'set' command"
+                        send_message = (
+                            "-ERR wrong number of arguments for 'set' command"
+                        )
                     else:
-                        res = set_value(arguments[0], arguments[1], [arg.upper() for arg in arguments[2:]])
+                        res = set_value(
+                            arguments[0],
+                            arguments[1],
+                            [arg.upper() for arg in arguments[2:]],
+                        )
                         send_message = encode_redis(res)
                 case "GET":
                     if len(arguments) != 1:
-                        send_message = "-ERR wrong number of arguments for 'get' command"
+                        send_message = (
+                            "-ERR wrong number of arguments for 'get' command"
+                        )
                     else:
                         res = get_value(arguments[0])
                         send_message = encode_redis(res)
@@ -68,31 +91,32 @@ async def client_connected_cb(reader, writer):
                     logging.info("unhandled command %s", command)
 
             send_message += REDIS_SEPARATOR
-            logging.info(f"[{addr!r}] Send {send_message!r}")
+            logging.info("[%s] Send %s", str(addr), repr(send_message))
             writer.write(send_message.encode())
             await writer.drain()
 
-    logging.info(f"[{addr!r}] Closing connection")
+    logging.info("[%s] Closing connection", str(addr))
     writer.close()
     await writer.wait_closed()
 
 
-async def run_server():
+async def run_server() -> None:
     redis_server = await asyncio.start_server(
         client_connected_cb,
         host="localhost",
         port=REDIS_PORT,
     )
 
-    addrs = ', '.join(str(sock.getsockname()) for sock in redis_server.sockets)
-    logging.info(f'Serving on {addrs}')
+    addrs = ", ".join(str(sock.getsockname()) for sock in redis_server.sockets)
+    logging.info("Serving on %s", str(addrs))
 
     async with redis_server:
         await redis_server.serve_forever()
 
 
-def main():
+def main() -> None:
     asyncio.run(run_server())
+
 
 if __name__ == "__main__":
     main()

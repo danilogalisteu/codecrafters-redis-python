@@ -1,34 +1,34 @@
 import logging
 from decimal import Decimal
 from enum import StrEnum
-
+from typing import Any
 
 REDIS_SEPARATOR = "\r\n"
 REDIS_SEPARATOR_LENGTH = len(REDIS_SEPARATOR)
 
 
 class IDSimple(StrEnum):
-    STRING = '+'
-    ERROR = '-'
-    INTEGER = ':'
-    NULL = '_'
-    BOOLEAN = '#'
-    DOUBLE = ','
-    BIGNUM = '('
+    STRING = "+"
+    ERROR = "-"
+    INTEGER = ":"
+    NULL = "_"
+    BOOLEAN = "#"
+    DOUBLE = ","
+    BIGNUM = "("
 
 
 class IDAggregate(StrEnum):
-    BSTRING = '$'
-    ARRAY = '*'
-    BERROR = '!'
-    VERBATIM = '='
-    MAP = '%'
-    ATTRIBUTE = '`'
-    SET = '~'
-    PUSH = '>'
+    BSTRING = "$"
+    ARRAY = "*"
+    BERROR = "!"
+    VERBATIM = "="
+    MAP = "%"
+    ATTRIBUTE = "`"
+    SET = "~"
+    PUSH = ">"
 
 
-def decode_simple(recv_id: str, value: str):
+def decode_simple(recv_id: str, value: str) -> Any:
     logging.debug("new simple %s %s", recv_id, value)
     match recv_id:
         case IDSimple.STRING:
@@ -50,8 +50,8 @@ def decode_simple(recv_id: str, value: str):
             raise ValueError("recv unhandled simple id", recv_id, value)
 
 
-def decode_redis(message, message_counter=0):
-    logging.debug(f"new decode {message!r} {message_counter}")
+def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
+    logging.debug("new decode %s %d", repr(message), message_counter)
 
     recv_id = message[message_counter]
 
@@ -85,11 +85,23 @@ def decode_redis(message, message_counter=0):
             array_length = int(value_next)
 
             array_res = []
-            logging.debug("new array, length %d %d %d %s", array_length, len(array_res), message_counter, message)
+            logging.debug(
+                "new array, length %d %d %d %s",
+                array_length,
+                len(array_res),
+                message_counter,
+                message,
+            )
             while len(array_res) < array_length:
                 array_value, message_counter = decode_redis(message, message_counter)
                 array_res.append(array_value)
-                logging.debug("new array_value %d %d %d %s", array_length, len(array_res), message_counter, array_value)
+                logging.debug(
+                    "new array_value %d %d %d %s",
+                    array_length,
+                    len(array_res),
+                    message_counter,
+                    array_value,
+                )
 
             return array_res, message_counter
 
@@ -101,18 +113,33 @@ def decode_redis(message, message_counter=0):
             map_length = int(value_next)
 
             map_res = {}
-            logging.debug("new map, length %d %d %d %s", map_length, len(map_res), message_counter, message)
+            logging.debug(
+                "new map, length %d %d %d %s",
+                map_length,
+                len(map_res),
+                message_counter,
+                message,
+            )
             while len(map_res) < map_length:
                 map_key, message_counter = decode_redis(message, message_counter)
                 map_value, message_counter = decode_redis(message, message_counter)
                 map_res[map_key] = map_value
-                logging.debug("new map item", map_length, len(map_res), message_counter, map_key, map_value)
+                logging.debug(
+                    "new map item, length %d %d %d %s %s",
+                    map_length,
+                    len(map_res),
+                    message_counter,
+                    map_key,
+                    map_value,
+                )
+
+            return map_res, message_counter
 
         case _:
             raise ValueError("unknown redis ID", recv_id)
 
 
-def encode_redis(value) -> str:
+def encode_redis(value: Any) -> str:
     logging.debug("new encode %s", str(value))
     if isinstance(value, str):
         if len(value) == 0:
@@ -131,9 +158,9 @@ def encode_redis(value) -> str:
     if isinstance(value, list):
         header = IDAggregate.ARRAY + str(len(value))
         data = [encode_redis(array_value) for array_value in value]
-        return REDIS_SEPARATOR.join([header] + data)
+        return REDIS_SEPARATOR.join([header, *data])
     if isinstance(value, dict):
         header = IDAggregate.MAP + str(len(value))
         data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
-        return REDIS_SEPARATOR.join([header] + data)
+        return REDIS_SEPARATOR.join([header, *data])
     raise ValueError("unhandled redis encoding type", type(value))
