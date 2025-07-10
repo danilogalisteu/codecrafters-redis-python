@@ -42,7 +42,12 @@ async def client_connected_cb(
             recv_message = recv_message[parsed_length:]
             logging.debug("new buffer %d %d %s", 0, len(recv_message), recv_message)
 
-            logging.info("[%s] Command line %s (%d)", str(addr), str(command_line), parsed_length)
+            logging.info(
+                "[%s] Command line %s (%d)",
+                str(addr),
+                str(command_line),
+                parsed_length,
+            )
             command = command_line[0].upper()
             arguments = command_line[1:] if len(command_line) > 0 else []
 
