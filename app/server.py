@@ -102,7 +102,12 @@ async def client_connected_cb(
     await writer.wait_closed()
 
 
-async def run_server() -> None:
+async def run_server(dirname: str | None, dbfilename: str | None = None) -> None:
+    if dirname:
+        REDIS_CONFIG["dir"] = dirname
+    if dbfilename:
+        REDIS_CONFIG["dbfilename"] = dbfilename
+
     redis_server = await asyncio.start_server(
         client_connected_cb,
         host=REDIS_HOST,

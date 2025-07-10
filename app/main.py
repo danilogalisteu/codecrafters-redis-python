@@ -9,8 +9,19 @@ logging.basicConfig(
 )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        prog="my-redis-server",
+        description="a redis server implementation",
+    )
+    parser.add_argument("--dir")
+    parser.add_argument("--dbfilename")
+    return parser.parse_args()
+
+
 def main() -> None:
-    asyncio.run(run_server())
+    args = parse_args()
+    asyncio.run(run_server(args.dir, args.dbfilename))
 
 
 if __name__ == "__main__":
