@@ -2,6 +2,11 @@ import logging
 from time import time_ns
 
 REDIS_DB = {}
+REDIS_META = {}
+
+
+def init_db(dirname: str, dbfilename: str):
+    pass
 
 
 def get_current_time() -> int:

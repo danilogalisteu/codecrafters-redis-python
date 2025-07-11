@@ -1,10 +1,20 @@
 import logging
 
-from .database import get_value, set_value
+from .database import get_value, init_db, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_CONFIG = {}
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
+
+
+def setup_redis(dirname: str | None, dbfilename: str | None = None) -> None:
+    if dirname:
+        REDIS_CONFIG["dir"] = dirname
+    if dbfilename:
+        REDIS_CONFIG["dbfilename"] = dbfilename
+
+    if dirname and dbfilename:
+        init_db(dirname, dbfilename)
 
 
 def handle_redis(recv_message: str) -> tuple[int, str]:

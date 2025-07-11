@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from .handler import REDIS_CONFIG, REDIS_QUIT, handle_redis
+from .handler import REDIS_QUIT, handle_redis, setup_redis
 from .redis import REDIS_SEPARATOR
 
 REDIS_HOST = "localhost"
@@ -40,10 +40,7 @@ async def client_connected_cb(
 
 
 async def run_server(dirname: str | None, dbfilename: str | None = None) -> None:
-    if dirname:
-        REDIS_CONFIG["dir"] = dirname
-    if dbfilename:
-        REDIS_CONFIG["dbfilename"] = dbfilename
+    setup_redis(dirname, dbfilename)
 
     redis_server = await asyncio.start_server(
         client_connected_cb,
