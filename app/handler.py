@@ -1,6 +1,6 @@
 import logging
 
-from .database import get_value, init_db, set_value
+from .database import get_keys, get_value, init_db, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_CONFIG = {}
@@ -97,6 +97,12 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                         send_message = "OK"
                 else:
                     send_message = "-ERR unhandled 'CONFIG' option"
+        case "KEYS":
+            if len(arguments) != 1:
+                send_message = "-ERR wrong number of arguments for 'KEYS' command"
+            else:
+                res = get_keys(arguments[0])
+                send_message = encode_redis(res)
         case _:
             logging.info("unhandled command %s", command)
 

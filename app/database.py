@@ -1,5 +1,6 @@
-import logging
 from time import time_ns
+import logging
+
 
 REDIS_DB = {}
 REDIS_META = {}
@@ -12,6 +13,26 @@ def init_db(dirname: str, dbfilename: str):
 def get_current_time() -> int:
     """Current time in ms"""
     return int(time_ns() / 1e6)
+
+
+def get_keys(pattern: str) -> list[str]:
+    keys = list(REDIS_DB.keys())
+    # TODO filter keys using pattern
+    return keys
+
+
+def get_value(key: str) -> str:
+    get_time = get_current_time()
+    data = REDIS_DB.get(key, {})
+    logging.info("GET time %d key %s data %s", get_time, key, data)
+
+    value = data.get("value", "")
+    exp = data.get("exp", None)
+    if exp is not None and get_time > exp:
+        logging.debug("GET expired key %s", key)
+        del REDIS_DB[key]
+        return ""
+    return value
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:
@@ -32,17 +53,3 @@ def set_value(key: str, value: str, options: list[str]) -> str:
     logging.info("SET time %d key %s value %s exp %s", set_time, key, value, exp)
     REDIS_DB[key] = {"value": value, "exp": exp}
     return "OK"
-
-
-def get_value(key: str) -> str:
-    get_time = get_current_time()
-    data = REDIS_DB.get(key, {})
-    logging.info("GET time %d key %s data %s", get_time, key, data)
-
-    value = data.get("value", "")
-    exp = data.get("exp", None)
-    if exp is not None and get_time > exp:
-        logging.debug("GET expired key %s", key)
-        del REDIS_DB[key]
-        return ""
-    return value
