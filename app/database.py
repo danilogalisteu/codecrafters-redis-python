@@ -19,12 +19,14 @@ def get_current_time() -> int:
 
 
 def get_keys(pattern: str) -> list[str]:
+    global REDIS_DB_DATA, REDIS_DB_NUM
     keys = list(REDIS_DB_DATA[REDIS_DB_NUM].keys())
     # TODO filter keys using pattern
     return keys
 
 
 def get_value(key: str) -> str:
+    global REDIS_DB_DATA, REDIS_DB_NUM
     get_time = get_current_time()
     data = REDIS_DB_DATA[REDIS_DB_NUM].get(key, {})
     logging.info("GET time %d key %s data %s", get_time, key, data)
@@ -39,10 +41,12 @@ def get_value(key: str) -> str:
 
 
 def save_db(dirname: str, dbfilename: str) -> None:
+    global REDIS_META, REDIS_DB_DATA
     save_rdb(dirname, dbfilename, REDIS_META, REDIS_DB_DATA)
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:
+    global REDIS_DB_DATA, REDIS_DB_NUM
     set_time = get_current_time()
     exp = None
     for opt in options:
