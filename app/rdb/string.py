@@ -6,11 +6,12 @@ def decode_string(data: bytes) -> tuple[int, str | int]:
     if dlen < 1:
         return 0, ""
 
-    try:
-        spos, slen = decode_length(data)
-    except ValueError:
+    print(data)
+    senc = data[0] >> 5
+    if senc == 0b11:
         return decode_length_special(data)
 
+    spos, slen = decode_length(data)
     if spos == 0:
         return 0, ""
     return spos + slen, data[spos : spos + slen].decode()
