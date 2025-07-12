@@ -28,6 +28,7 @@ def read_rdb(
 
     db_pos, db_check = read_rdb_checksum(buffer, db_pos)
 
+    print(db_data)
     return db_meta, db_data
 
 
