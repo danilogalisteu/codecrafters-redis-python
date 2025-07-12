@@ -10,11 +10,11 @@ def read_rdb_value(
 ) -> tuple[int, str, str | int, int | None]:
     vexp = None
     if buffer[pos] == RDBOpCode.EXPIRETIME:
-        pos += 5
         vexp = struct.unpack("<L", buffer[pos + 1 : pos + 5])[0] * 1000
+        pos += 5
     elif buffer[pos] == RDBOpCode.EXPIRETIMEMS:
-        pos += 9
         vexp = struct.unpack("<Q", buffer[pos + 1 : pos + 9])[0]
+        pos += 9
 
     vtype = buffer[pos]
     pos += 1
