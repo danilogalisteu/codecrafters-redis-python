@@ -2,17 +2,23 @@ import logging
 
 from .config import get_config, set_config
 from .database import get_keys, get_value, init_db, save_db, set_value
-from .info import get_info, isin_info
+from .info import get_info, isin_info, set_info
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
-def setup_redis(dirname: str | None, dbfilename: str | None = None) -> None:
+def setup_redis(
+    dirname: str | None,
+    dbfilename: str | None = None,
+    replicaof: str | None = None,
+) -> None:
     if dirname:
         set_config("dir", dirname)
     if dbfilename:
         set_config("dbfilename", dbfilename)
+    if replicaof:
+        set_info("replication", "role", "slave")
 
     if dirname and dbfilename:
         init_db(dirname, dbfilename)
