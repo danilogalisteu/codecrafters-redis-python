@@ -6,7 +6,7 @@ def decode_length(data: bytes) -> tuple[int, int]:
     if dlen < 1:
         return 0, 0
 
-    senc = data[0] >> 5
+    senc = data[0] >> 6
 
     if senc == 0b00:
         return 1, data[0]
@@ -29,7 +29,7 @@ def decode_length_special(data: bytes) -> tuple[int, int]:
     if dlen < 1:
         return 0, 0
 
-    senc = data[0] >> 5
+    senc = data[0] >> 6
     if senc != 0b11:
         return 0, 0
 
