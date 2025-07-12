@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import logging
 
-from .server import run_server
+from .server import REDIS_PORT, run_server
 
 logging.basicConfig(
     format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.INFO
@@ -16,12 +16,13 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dir")
     parser.add_argument("--dbfilename")
+    parser.add_argument("--port", type=int, default=REDIS_PORT)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    asyncio.run(run_server(args.dir, args.dbfilename))
+    asyncio.run(run_server(args.dir, args.dbfilename, args.port))
 
 
 if __name__ == "__main__":

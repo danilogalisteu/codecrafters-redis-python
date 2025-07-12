@@ -39,13 +39,17 @@ async def client_connected_cb(
     await writer.wait_closed()
 
 
-async def run_server(dirname: str | None, dbfilename: str | None = None) -> None:
+async def run_server(
+    dirname: str | None,
+    dbfilename: str | None = None,
+    port: int = REDIS_PORT,
+) -> None:
     setup_redis(dirname, dbfilename)
 
     redis_server = await asyncio.start_server(
         client_connected_cb,
         host=REDIS_HOST,
-        port=REDIS_PORT,
+        port=port,
     )
 
     addrs = ", ".join(str(sock.getsockname()) for sock in redis_server.sockets)
