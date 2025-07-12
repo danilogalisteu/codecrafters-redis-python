@@ -38,9 +38,9 @@ def save_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
     buffer = bytes()
     if exp is not None:
         if exp % 1000 == 0:
-            buffer += struct.pack("B<L", RDBOpCode.EXPIRETIME, int(exp / 1000))
+            buffer += bytes([RDBOpCode.EXPIRETIME]) + struct.pack("<L", int(exp / 1000))
         else:
-            buffer += struct.pack("B<Q", RDBOpCode.EXPIRETIMEMS, exp)
+            buffer += bytes([RDBOpCode.EXPIRETIMEMS]) + struct.pack("<Q", exp)
 
     if isinstance(value, str):
         buffer += bytes([RDBValue.STR])

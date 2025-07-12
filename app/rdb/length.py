@@ -58,12 +58,12 @@ def encode_length(value: int) -> bytes:
         return bytes([value])
     if value < 1 << 14:
         return struct.pack(">H", 1 << 14 | value)
-    return bytes([1 << 7]) + struct.pack(">L", value)
+    return struct.pack("B>L", 1 << 7, value)
 
 
 def encode_length_special(value: int) -> bytes:
     if value < 1 << 8:
-        return bytes([0b11 << 6, value])
+        return struct.pack("BB",0b11 << 6, value)
     if value < 1 << 16:
-        return bytes([(0b11 << 6) | 1]) + struct.pack("<H", value)
-    return bytes([(0b11 << 6) | 2]) + struct.pack("<L", value)
+        return struct.pack("B<H", (0b11 << 6) | 1, value)
+    return struct.pack("B<L", (0b11 << 6) | 2, value)
