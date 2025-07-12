@@ -1,18 +1,18 @@
 import logging
 
+from .config import get_config, set_config
 from .database import get_keys, get_value, init_db, save_db, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
-REDIS_CONFIG = {}
 REDIS_INFO = {"replication": {"role": "master"}}
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
 def setup_redis(dirname: str | None, dbfilename: str | None = None) -> None:
     if dirname:
-        REDIS_CONFIG["dir"] = dirname
+        set_config("dir", dirname)
     if dbfilename:
-        REDIS_CONFIG["dbfilename"] = dbfilename
+        set_config("dbfilename", dbfilename)
 
     if dirname and dbfilename:
         init_db(dirname, dbfilename)
@@ -78,11 +78,7 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                         )
                     else:
                         name = arguments[1]
-                        if name in REDIS_CONFIG:
-                            value = REDIS_CONFIG[name]
-                            send_message = encode_redis([name, value])
-                        else:
-                            send_message = "-ERR unknown 'CONFIG' parameter"
+                        send_message = get_config(name)
                 elif option == "SET":
                     if len(arguments) < 3:
                         send_message = (
@@ -91,12 +87,11 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                     else:
                         name = arguments[1]
                         value = arguments[2]
-                        REDIS_CONFIG[name] = value
-                        send_message = encode_redis("OK")
+                        send_message = set_config(name, value)
                 else:
                     send_message = "-ERR unhandled 'CONFIG' option"
         case "SAVE":
-            save_db(REDIS_CONFIG["dir"], REDIS_CONFIG["dbfilename"])
+            save_db(get_config("dir"), get_config("dbfilename"))
             send_message = encode_redis("OK")
         case "KEYS":
             if len(arguments) != 1:
