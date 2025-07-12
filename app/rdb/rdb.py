@@ -7,9 +7,8 @@ from .file.metadata import read_rdb_meta, save_rdb_meta
 
 
 def read_rdb(
-    dirname: str, dbfilename: str
+    db_fn: Path
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
-    db_fn = Path(dirname) / dbfilename
     if not db_fn.is_file():
         return {}, {}
 
@@ -33,17 +32,16 @@ def read_rdb(
 
 
 def save_rdb(
-    dirname: str,
-    dbfilename: str,
+    db_fn: Path,
     meta: dict[str, str],
     data: dict[int, dict[str, dict[str, str | int | None]]],
 ) -> None:
-    db_fn = Path(dirname) / dbfilename
+    buffer = save_rdb_header()
+    buffer += save_rdb_meta(meta)
+    buffer += save_rdb_data(data)
+    buffer += save_rdb_checksum(0)
     with open(db_fn, "wb") as file:
-        file.write(save_rdb_header())
-        file.write(save_rdb_meta(meta))
-        file.write(save_rdb_data(data))
-        file.write(save_rdb_checksum(0))
+        file.write(buffer)
 
 
 if __name__ == "__main__":

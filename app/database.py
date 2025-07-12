@@ -1,3 +1,4 @@
+from pathlib import Path
 from time import time_ns
 import logging
 
@@ -10,7 +11,9 @@ REDIS_META = {}
 
 def init_db(dirname: str, dbfilename: str):
     global REDIS_META, REDIS_DB_DATA
-    REDIS_META, REDIS_DB_DATA = read_rdb(dirname, dbfilename)
+    db_fn = Path(dirname) / dbfilename
+    if db_fn.is_file():
+        REDIS_META, REDIS_DB_DATA = read_rdb(db_fn)
 
 
 def get_current_time() -> int:
@@ -42,7 +45,8 @@ def get_value(key: str) -> str:
 
 def save_db(dirname: str, dbfilename: str) -> None:
     global REDIS_META, REDIS_DB_DATA
-    save_rdb(dirname, dbfilename, REDIS_META, REDIS_DB_DATA)
+    db_fn = Path(dirname) / dbfilename
+    save_rdb(db_fn, REDIS_META, REDIS_DB_DATA)
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:
