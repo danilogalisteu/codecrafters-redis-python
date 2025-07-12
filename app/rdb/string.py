@@ -6,7 +6,6 @@ def decode_string(data: bytes) -> tuple[int, str | int]:
     if dlen < 1:
         return 0, ""
 
-    print(data)
     senc = data[0] >> 6
     if senc == 0b11:
         return decode_length_special(data)
