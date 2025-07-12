@@ -1,15 +1,18 @@
-from .length import decode_length, encode_length
+from .length import decode_length, decode_length_special, encode_length
 
 
-def decode_string(data: bytes) -> tuple[int, str]:
+def decode_string(data: bytes) -> tuple[int, str | int]:
     dlen = len(data)
     if dlen < 1:
         return 0, ""
 
-    spos, slen = decode_length(data)
+    try:
+        spos, slen = decode_length(data)
+    except ValueError:
+        return decode_length_special(data)
+
     if spos == 0:
         return 0, ""
-
     return spos + slen, data[spos : spos + slen].decode()
 
 

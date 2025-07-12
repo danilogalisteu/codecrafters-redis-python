@@ -21,6 +21,18 @@ def decode_length(data: bytes) -> tuple[int, int]:
             return 0, 0
         return 5, struct.unpack(">L", data[1:5])[0]
 
+    raise ValueError("unhandled length decoding format")
+
+
+def decode_length_special(data: bytes) -> tuple[int, int]:
+    dlen = len(data)
+    if dlen < 1:
+        return 0, 0
+
+    senc = data[0] >> 5
+    if senc != 0b11:
+        return 0, 0
+
     sfmt = data[0] & 0x3F
 
     if sfmt == 0:
