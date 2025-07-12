@@ -16,13 +16,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--dir")
     parser.add_argument("--dbfilename")
+    parser.add_argument("--replicaof")
     parser.add_argument("--port", type=int, default=REDIS_PORT)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    asyncio.run(run_server(args.dir, args.dbfilename, args.port))
+    asyncio.run(run_server(args.dir, args.dbfilename, args.port, args.replicaof))
 
 
 if __name__ == "__main__":
