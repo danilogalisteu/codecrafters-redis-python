@@ -14,6 +14,7 @@ def read_rdb(
         return {}, {}
 
     buffer = db_fn.read_bytes()
+    print(buffer)
 
     db_pos, db_version = read_rdb_header(buffer)
     db_pos, db_meta = read_rdb_meta(buffer, db_pos)
