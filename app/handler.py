@@ -4,6 +4,7 @@ from .database import get_keys, get_value, init_db, save_db, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_CONFIG = {}
+REDIS_INFO = {"replication": {"role": "master"}}
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
@@ -103,6 +104,24 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
             else:
                 res = get_keys(arguments[0])
                 send_message = encode_redis(res)
+        case "INFO":
+            if len(arguments) == 0:
+                send_message = encode_redis(
+                    "\n\n".join([
+                        f"# {section.title()}\n" + "\n".join([f"{key}:{value}" for key, value in REDIS_INFO[section.lower()].items()])
+                        for section in REDIS_INFO
+                    ])
+                )
+            else:
+                if all(section.lower() in REDIS_INFO for section in arguments):
+                    send_message = encode_redis(
+                        "\n\n".join([
+                            f"# {section.title()}\n" + "\n".join([f"{key}:{value}" for key, value in REDIS_INFO[section.lower()].items()])
+                            for section in arguments
+                        ])
+                    )
+                else:
+                    send_message = "-ERR unknown section for 'INFO' command"
         case _:
             logging.info("unhandled command %s", command)
 
