@@ -5,7 +5,7 @@ import logging
 from .server import run_server
 
 logging.basicConfig(
-    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING
+    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.INFO
 )
 
 
