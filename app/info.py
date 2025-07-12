@@ -1,4 +1,4 @@
-REDIS_INFO: dict[str, dict[str, str | int]] = {"replication": {"role": "master"}}
+REDIS_INFO: dict[str, dict[str, str | int]] = {"replication": {}}
 
 
 def get_info(section: str | None = None) -> str:

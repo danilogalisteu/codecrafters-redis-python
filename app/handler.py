@@ -19,6 +19,14 @@ def setup_redis(
         set_config("dbfilename", dbfilename)
     if replicaof:
         set_info("replication", "role", "slave")
+    else:
+        set_info("replication", "role", "master")
+        set_info(
+            "replication",
+            "master_replid",
+            "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
+        )
+        set_info("replication", "master_repl_offset", 0)
 
     if dirname and dbfilename:
         init_db(dirname, dbfilename)
