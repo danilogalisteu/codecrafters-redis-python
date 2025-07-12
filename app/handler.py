@@ -1,6 +1,6 @@
 import logging
 
-from .database import get_keys, get_value, init_db, set_value
+from .database import get_keys, get_value, init_db, save_db, set_value
 from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_CONFIG = {}
@@ -25,12 +25,9 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
         len(recv_message),
         recv_message,
     )
-    logging.debug("new buffer %d %d %s", 0, len(recv_message), recv_message)
-
     logging.info(
-        "Command line %s (%d)",
+        "Command line %s",
         str(command_line),
-        parsed_length,
     )
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
@@ -94,9 +91,12 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                         name = arguments[1]
                         value = arguments[2]
                         REDIS_CONFIG[name] = value
-                        send_message = "OK"
+                        send_message = encode_redis("OK")
                 else:
                     send_message = "-ERR unhandled 'CONFIG' option"
+        case "SAVE":
+            save_db(REDIS_CONFIG["dir"], REDIS_CONFIG["dbfilename"])
+            send_message = encode_redis("OK")
         case "KEYS":
             if len(arguments) != 1:
                 send_message = "-ERR wrong number of arguments for 'KEYS' command"

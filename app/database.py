@@ -35,6 +35,10 @@ def get_value(key: str) -> str:
     return value
 
 
+def save_db(dirname: str, dbfilename: str) -> None:
+    pass
+
+
 def set_value(key: str, value: str, options: list[str]) -> str:
     set_time = get_current_time()
     exp = None
