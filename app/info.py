@@ -1,4 +1,4 @@
-REDIS_INFO = {"replication": {"role": "master"}}
+REDIS_INFO: dict[str, dict[str, str | int]] = {"replication": {"role": "master"}}
 
 
 def get_info(section: str | None = None) -> str:
@@ -22,3 +22,10 @@ def get_info(section: str | None = None) -> str:
 
 def isin_info(section: str) -> bool:
     return section.lower() in REDIS_INFO
+
+
+def set_info(section: str, key: str, value: str | int) -> None:
+    global REDIS_INFO
+    if section not in REDIS_INFO:
+        REDIS_INFO[section] = {}
+    REDIS_INFO[section][key] = value
