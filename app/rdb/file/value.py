@@ -11,10 +11,10 @@ def read_rdb_value(
     vexp = None
     if buffer[pos] == RDBOpCode.EXPIRETIME:
         pos += 5
-        vexp = struct.unpack("<L", buffer[pos + 1 : pos + 5])[0] * 1000
+        vexp = struct.unpack(">L", buffer[pos + 1 : pos + 5])[0] * 1000
     elif buffer[pos] == RDBOpCode.EXPIRETIMEMS:
         pos += 9
-        vexp = struct.unpack("<Q", buffer[pos + 1 : pos + 9])[0]
+        vexp = struct.unpack(">Q", buffer[pos + 1 : pos + 9])[0]
 
     vtype = buffer[pos]
     pos += 1
@@ -38,9 +38,9 @@ def save_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
     buffer = bytes()
     if exp is not None:
         if exp % 1000 == 0:
-            buffer += bytes([RDBOpCode.EXPIRETIME]) + struct.pack("<L", int(exp / 1000))
+            buffer += bytes([RDBOpCode.EXPIRETIME]) + struct.pack(">L", int(exp / 1000))
         else:
-            buffer += bytes([RDBOpCode.EXPIRETIMEMS]) + struct.pack("<Q", exp)
+            buffer += bytes([RDBOpCode.EXPIRETIMEMS]) + struct.pack(">Q", exp)
 
     if isinstance(value, str):
         buffer += bytes([RDBValue.STR])
