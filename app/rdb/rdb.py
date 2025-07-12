@@ -7,7 +7,7 @@ from .file.metadata import read_rdb_meta, save_rdb_meta
 
 
 def read_rdb(
-    db_fn: Path
+    db_fn: Path,
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
     if not db_fn.is_file():
         return {}, {}
