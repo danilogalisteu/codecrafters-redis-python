@@ -44,7 +44,7 @@ async def run_server(
     port: int = REDIS_PORT,
     replicaof: str | None = None,
 ) -> None:
-    setup_redis(dirname, dbfilename, replicaof)
+    await setup_redis(dirname, dbfilename, replicaof)
 
     redis_server = await asyncio.start_server(
         client_connected_cb,

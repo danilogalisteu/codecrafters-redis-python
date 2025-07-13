@@ -3,12 +3,13 @@ import logging
 from .config import get_config, set_config
 from .database import get_keys, get_value, init_db, save_db, set_value
 from .info import get_info, isin_info, set_info
+from .replication import send_handshake
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
-def setup_redis(
+async def setup_redis(
     dirname: str | None,
     dbfilename: str | None = None,
     replicaof: str | None = None,
@@ -17,8 +18,14 @@ def setup_redis(
         set_config("dir", dirname)
     if dbfilename:
         set_config("dbfilename", dbfilename)
+
+    if dirname and dbfilename:
+        init_db(dirname, dbfilename)
+
     if replicaof:
         set_info("replication", "role", "slave")
+        host, port = replicaof.split(" ")
+        await send_handshake(host, int(port))
     else:
         set_info("replication", "role", "master")
         set_info(
@@ -27,9 +34,6 @@ def setup_redis(
             "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb",
         )
         set_info("replication", "master_repl_offset", 0)
-
-    if dirname and dbfilename:
-        init_db(dirname, dbfilename)
 
 
 def handle_redis(recv_message: str) -> tuple[int, str]:
