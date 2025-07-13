@@ -3,7 +3,7 @@ import logging
 from .config import get_config, set_config
 from .database import get_keys, get_value, init_db, save_db, set_value
 from .info import get_info, isin_info, set_info
-from .redis import REDIS_SEPARATOR, decode_redis, encode_redis
+from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 

@@ -1,8 +1,7 @@
 import asyncio
 import logging
 
-from .handler import REDIS_QUIT, handle_redis, setup_redis
-from .redis import REDIS_SEPARATOR
+from .redis.handler import REDIS_QUIT, REDIS_SEPARATOR, handle_redis, setup_redis
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379

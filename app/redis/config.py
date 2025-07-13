@@ -1,4 +1,4 @@
-from .redis import encode_redis
+from .resp import encode_redis
 
 REDIS_CONFIG = {}
 

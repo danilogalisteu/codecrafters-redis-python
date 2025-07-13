@@ -42,7 +42,3 @@ def save_rdb(
     buffer += save_rdb_checksum(0)
     with open(db_fn, "wb") as file:
         file.write(buffer)
-
-
-if __name__ == "__main__":
-    read_rdb(".", "example.rdb")
