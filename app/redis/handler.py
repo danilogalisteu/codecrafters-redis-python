@@ -10,6 +10,7 @@ REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
 async def setup_redis(
+    port: int,
     dirname: str | None,
     dbfilename: str | None = None,
     replicaof: str | None = None,
@@ -24,8 +25,8 @@ async def setup_redis(
 
     if replicaof:
         set_info("replication", "role", "slave")
-        host, port = replicaof.split(" ")
-        await send_handshake(host, int(port))
+        master_host, master_port = replicaof.split(" ")
+        await send_handshake(master_host, int(master_port), port)
     else:
         set_info("replication", "role", "master")
         set_info(
