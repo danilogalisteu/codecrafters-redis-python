@@ -38,7 +38,7 @@ async def send_handshake(master_host: str, master_port: int, slave_port: int) ->
     await writer.drain()
 
     data = await reader.read(100)
-    print(f"Received: {data.decode()!r}")
+    print(f"Received: {data!r}")
 
     print("Close the connection")
     writer.close()
