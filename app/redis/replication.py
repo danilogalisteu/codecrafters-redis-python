@@ -32,6 +32,14 @@ async def send_handshake(master_host: str, master_port: int, slave_port: int) ->
     data = await reader.read(100)
     print(f"Received: {data.decode()!r}")
 
+    message = encode_redis(["PSYNC", "?", "-1"]) + REDIS_SEPARATOR
+    print(f"Sending: {message!r}")
+    writer.write(message.encode())
+    await writer.drain()
+
+    data = await reader.read(100)
+    print(f"Received: {data.decode()!r}")
+
     print("Close the connection")
     writer.close()
     await writer.wait_closed()
