@@ -13,7 +13,8 @@ def init_db(dirname: str, dbfilename: str):
     global REDIS_META, REDIS_DB_DATA
     db_fn = Path(dirname) / dbfilename
     if db_fn.is_file():
-        REDIS_META, REDIS_DB_DATA = read_rdb(db_fn)
+        with db_fn.open("rb") as file:
+            REDIS_META, REDIS_DB_DATA = read_rdb(file)
 
 
 def get_current_time() -> int:
@@ -46,7 +47,8 @@ def get_value(key: str) -> str:
 def save_db(dirname: str, dbfilename: str) -> None:
     global REDIS_META, REDIS_DB_DATA
     db_fn = Path(dirname) / dbfilename
-    write_rdb(db_fn, REDIS_META, REDIS_DB_DATA)
+    with db_fn.open("wb") as file:
+        write_rdb(file, REDIS_META, REDIS_DB_DATA)
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:

@@ -1,4 +1,4 @@
-from pathlib import Path
+from io import BufferedReader, BufferedWriter
 
 from .file.checksum import read_rdb_checksum, write_rdb_checksum
 from .file.data import read_rdb_data, write_rdb_data
@@ -7,12 +7,9 @@ from .file.metadata import read_rdb_meta, write_rdb_meta
 
 
 def read_rdb(
-    db_fn: Path,
+    in_file: BufferedReader,
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
-    if not db_fn.is_file():
-        return {}, {}
-
-    buffer = db_fn.read_bytes()
+    buffer = in_file.read()
     print(buffer)
 
     db_pos, db_version = read_rdb_header(buffer)
@@ -32,7 +29,7 @@ def read_rdb(
 
 
 def write_rdb(
-    db_fn: Path,
+    out_file: BufferedWriter,
     meta: dict[str, str],
     data: dict[int, dict[str, dict[str, str | int | None]]],
 ) -> None:
@@ -40,5 +37,4 @@ def write_rdb(
     buffer += write_rdb_meta(meta)
     buffer += write_rdb_data(data)
     buffer += write_rdb_checksum(0)
-    with open(db_fn, "wb") as file:
-        file.write(buffer)
+    out_file.write(buffer)
