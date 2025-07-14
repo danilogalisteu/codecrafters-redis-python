@@ -1,17 +1,10 @@
-from .resp import encode_redis
-
 REDIS_CONFIG = {}
 
 
-def get_config(name: str) -> str:
-    if name in REDIS_CONFIG:
-        value = REDIS_CONFIG[name]
-        return encode_redis([name, value])
-    else:
-        return "-ERR unknown 'CONFIG' parameter"
+def get_config(name: str) -> str | None:
+    return REDIS_CONFIG.get(name, None)
 
 
-def set_config(name: str, value: str) -> str:
+def set_config(name: str, value: str) -> None:
     global REDIS_CONFIG
     REDIS_CONFIG[name] = value
-    return encode_redis("OK")

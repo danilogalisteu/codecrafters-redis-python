@@ -68,7 +68,11 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                         )
                     else:
                         name = arguments[1]
-                        send_message = get_config(name)
+                        value = get_config(name)
+                        if value is not None:
+                            send_message = encode_redis([name, value])
+                        else:
+                            send_message = "-ERR unknown 'CONFIG' parameter"
                 elif option == "SET":
                     if len(arguments) < 3:
                         send_message = (
@@ -77,7 +81,8 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                     else:
                         name = arguments[1]
                         value = arguments[2]
-                        send_message = set_config(name, value)
+                        set_config(name, value)
+                        send_message = encode_redis("OK")
                 else:
                     send_message = "-ERR unhandled 'CONFIG' option"
         case "SAVE":
