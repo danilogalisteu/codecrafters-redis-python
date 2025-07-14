@@ -10,8 +10,8 @@ def read_rdb_checksum(buffer: bytes, pos: int = 0) -> tuple[int, int]:
     if buffer[pos] != RDBOpCode.EOF:
         return pos, 0
 
-    checksum = struct.unpack("<Q", buffer[pos + 1 : pos + 9])[0]
-    return pos + 9, checksum
+    pos += 1
+    return pos + 8, struct.unpack("<Q", buffer[pos : pos + 8])[0]
 
 
 def write_rdb_checksum(checksum: int) -> bytes:
