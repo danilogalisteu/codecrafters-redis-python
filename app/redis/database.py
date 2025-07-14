@@ -43,7 +43,7 @@ def get_value(key: str) -> str:
 
 def save_db(dirname: str, dbfilename: str) -> None:
     db_fn = Path(dirname) / dbfilename
-    db_fn.write_bytes(write_rdb(REDIS_META, REDIS_DB_DATA))
+    db_fn.write_bytes(write_db())
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:
@@ -64,3 +64,7 @@ def set_value(key: str, value: str, options: list[str]) -> str:
     logging.info("SET time %d key %s value %s exp %s", set_time, key, value, exp)
     REDIS_DB_DATA[REDIS_DB_NUM][key] = {"value": value, "exp": exp}
     return "OK"
+
+
+def write_db() -> bytes:
+    return write_rdb(REDIS_META, REDIS_DB_DATA)
