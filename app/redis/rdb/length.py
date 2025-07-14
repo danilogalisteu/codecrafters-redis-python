@@ -65,5 +65,5 @@ def encode_length_special(value: int) -> bytes:
     if value < 1 << 8:
         return struct.pack("BB", 0b11 << 6, value)
     if value < 1 << 16:
-        return struct.pack("B<H", (0b11 << 6) | 1, value)
-    return struct.pack("B<L", (0b11 << 6) | 2, value)
+        return bytes([(0b11 << 6) | 1]) + struct.pack("<H", value)
+    return bytes([(0b11 << 6) | 2]) + struct.pack("<L", value)
