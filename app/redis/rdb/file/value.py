@@ -35,7 +35,7 @@ def read_rdb_value(
 
 
 def write_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
-    buffer = bytes()
+    buffer = b""
     if exp is not None:
         if exp % 1000 == 0:
             buffer += bytes([RDBOpCode.EXPIRETIME]) + struct.pack("<L", int(exp / 1000))

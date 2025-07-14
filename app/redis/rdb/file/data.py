@@ -45,7 +45,7 @@ def read_rdb_data(
 
 
 def write_rdb_data(data: dict[int, dict[str, dict[str, str | int | None]]]) -> bytes:
-    buffer = bytes()
+    buffer = b""
     for db_num, db_data in data.items():
         buffer += bytes([RDBOpCode.SELECTDB, db_num])
         buffer += write_rdb_size(
