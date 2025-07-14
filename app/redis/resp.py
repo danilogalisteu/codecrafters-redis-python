@@ -164,3 +164,9 @@ def encode_redis(value: Any) -> str:
         data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
         return REDIS_SEPARATOR.join([header, *data])
     raise ValueError("unhandled redis encoding type", type(value))
+
+
+def encode_data(data: bytes) -> bytes:
+    if len(data) == 0:
+        return (IDAggregate.BSTRING + "-1").encode()
+    return (IDAggregate.BSTRING + str(len(data)) + REDIS_SEPARATOR).encode() + data
