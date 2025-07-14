@@ -1,4 +1,4 @@
-from .value import read_rdb_value, save_rdb_value
+from .value import read_rdb_value, write_rdb_value
 from ..constants import RDBOpCode
 from ..length import decode_length, encode_length
 
@@ -11,7 +11,7 @@ def read_rdb_size(buffer: bytes) -> tuple[int, int, int]:
     return 0, 0, 0
 
 
-def save_rdb_size(size_hash: int, size_exph: int) -> bytes:
+def write_rdb_size(size_hash: int, size_exph: int) -> bytes:
     return (
         bytes([RDBOpCode.RESIZEDB])
         + encode_length(size_hash)
@@ -44,14 +44,14 @@ def read_rdb_data(
         data[vkey] = {"value": vval, "exp": vexp}
 
 
-def save_rdb_data(data: dict[int, dict[str, dict[str, str | int | None]]]) -> bytes:
+def write_rdb_data(data: dict[int, dict[str, dict[str, str | int | None]]]) -> bytes:
     buffer = bytes()
     for db_num, db_data in data.items():
         buffer += bytes([RDBOpCode.SELECTDB, db_num])
-        buffer += save_rdb_size(
+        buffer += write_rdb_size(
             len(db_data),
             len([val for val in db_data.values() if val["exp"] is not None]),
         )
         for key, value in db_data.items():
-            buffer += save_rdb_value(key, value["value"], value["exp"])
+            buffer += write_rdb_value(key, value["value"], value["exp"])
     return buffer

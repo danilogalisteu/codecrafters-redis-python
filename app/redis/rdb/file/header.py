@@ -6,5 +6,5 @@ def read_rdb_header(buffer: bytes) -> tuple[int, str]:
     return 9, buffer[5:9].decode()
 
 
-def save_rdb_header(version: str = RDB_VERSION) -> bytes:
+def write_rdb_header(version: str = RDB_VERSION) -> bytes:
     return RDB_NAME.encode() + version.encode()

@@ -2,7 +2,7 @@ from pathlib import Path
 from time import time_ns
 import logging
 
-from .rdb import read_rdb, save_rdb
+from .rdb import read_rdb, write_rdb
 
 REDIS_DB_NUM = 0
 REDIS_DB_DATA = {REDIS_DB_NUM: {}}
@@ -46,7 +46,7 @@ def get_value(key: str) -> str:
 def save_db(dirname: str, dbfilename: str) -> None:
     global REDIS_META, REDIS_DB_DATA
     db_fn = Path(dirname) / dbfilename
-    save_rdb(db_fn, REDIS_META, REDIS_DB_DATA)
+    write_rdb(db_fn, REDIS_META, REDIS_DB_DATA)
 
 
 def set_value(key: str, value: str, options: list[str]) -> str:

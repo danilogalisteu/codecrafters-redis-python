@@ -14,5 +14,5 @@ def read_rdb_checksum(buffer: bytes, pos: int = 0) -> tuple[int, int]:
     return pos + 9, checksum
 
 
-def save_rdb_checksum(checksum: int) -> bytes:
+def write_rdb_checksum(checksum: int) -> bytes:
     return bytes([RDBOpCode.EOF]) + struct.pack("<Q", checksum)

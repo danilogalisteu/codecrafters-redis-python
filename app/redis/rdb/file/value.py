@@ -34,7 +34,7 @@ def read_rdb_value(
     return pos, str(vkey), vval, vexp
 
 
-def save_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
+def write_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
     buffer = bytes()
     if exp is not None:
         if exp % 1000 == 0:

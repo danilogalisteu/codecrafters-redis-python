@@ -19,7 +19,7 @@ def read_rdb_meta(buffer: bytes, pos: int = 0) -> tuple[int, dict[str, str]]:
         data[vkey] = vval
 
 
-def save_rdb_meta(meta: dict[str, str]) -> bytes:
+def write_rdb_meta(meta: dict[str, str]) -> bytes:
     buffer = bytes()
     for key, value in meta.items():
         buffer += encode_string(key)

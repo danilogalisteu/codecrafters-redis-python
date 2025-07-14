@@ -1,9 +1,9 @@
 from pathlib import Path
 
-from .file.checksum import read_rdb_checksum, save_rdb_checksum
-from .file.data import read_rdb_data, save_rdb_data
-from .file.header import read_rdb_header, save_rdb_header
-from .file.metadata import read_rdb_meta, save_rdb_meta
+from .file.checksum import read_rdb_checksum, write_rdb_checksum
+from .file.data import read_rdb_data, write_rdb_data
+from .file.header import read_rdb_header, write_rdb_header
+from .file.metadata import read_rdb_meta, write_rdb_meta
 
 
 def read_rdb(
@@ -31,14 +31,14 @@ def read_rdb(
     return db_meta, db_data
 
 
-def save_rdb(
+def write_rdb(
     db_fn: Path,
     meta: dict[str, str],
     data: dict[int, dict[str, dict[str, str | int | None]]],
 ) -> None:
-    buffer = save_rdb_header()
-    buffer += save_rdb_meta(meta)
-    buffer += save_rdb_data(data)
-    buffer += save_rdb_checksum(0)
+    buffer = write_rdb_header()
+    buffer += write_rdb_meta(meta)
+    buffer += write_rdb_data(data)
+    buffer += write_rdb_checksum(0)
     with open(db_fn, "wb") as file:
         file.write(buffer)
