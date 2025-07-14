@@ -1,7 +1,7 @@
 REDIS_INFO: dict[str, dict[str, str | int]] = {"replication": {}}
 
 
-def get_info(section: str | None = None) -> str:
+def get_info_str(section: str | None = None) -> str:
     if section is None:
         return "\n\n".join(
             [

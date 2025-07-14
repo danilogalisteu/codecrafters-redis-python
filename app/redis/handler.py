@@ -2,7 +2,7 @@ import logging
 
 from .config import get_config, set_config
 from .database import get_keys, get_value, save_db, set_value
-from .info import get_info, isin_info
+from .info import get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
@@ -91,11 +91,11 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                 send_message = encode_redis(res)
         case "INFO":
             if len(arguments) == 0:
-                send_message = encode_redis(get_info())
+                send_message = encode_redis(get_info_str())
             else:
                 if all(isin_info(section) for section in arguments):
                     send_message = encode_redis(
-                        "\n\n".join([get_info(section) for section in arguments])
+                        "\n\n".join([get_info_str(section) for section in arguments])
                     )
                 else:
                     send_message = "-ERR unknown section for 'INFO' command"
