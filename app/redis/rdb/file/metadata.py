@@ -19,9 +19,10 @@ def read_rdb_meta(buffer: bytes, pos: int = 0) -> tuple[int, dict[str, str]]:
         data[vkey] = vval
 
 
-def write_rdb_meta(meta: dict[str, str]) -> bytes:
+def write_rdb_meta(meta: dict[str, str | int]) -> bytes:
     buffer = b""
     for key, value in meta.items():
+        buffer += bytes([RDBOpCode.AUX])
         buffer += encode_string(key)
         buffer += encode_string(value)
     return buffer
