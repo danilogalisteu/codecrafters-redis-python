@@ -2,7 +2,7 @@ REDIS_CONFIG = {}
 
 
 def get_config(name: str) -> str | None:
-    return REDIS_CONFIG.get(name, None)
+    return REDIS_CONFIG.get(name)
 
 
 def set_config(name: str, value: str) -> None:

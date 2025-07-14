@@ -9,7 +9,7 @@ REDIS_DB_DATA = {REDIS_DB_NUM: {}}
 REDIS_META = {}
 
 
-def init_db(dirname: str, dbfilename: str):
+def init_db(dirname: str, dbfilename: str) -> None:
     global REDIS_META, REDIS_DB_DATA
     db_fn = Path(dirname) / dbfilename
     if db_fn.is_file():
