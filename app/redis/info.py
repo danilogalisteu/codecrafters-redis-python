@@ -29,7 +29,6 @@ def isin_info(section: str) -> bool:
 
 
 def set_info(section: str, key: str, value: str | int) -> None:
-    global REDIS_INFO
     if section not in REDIS_INFO:
         REDIS_INFO[section] = {}
     REDIS_INFO[section][key] = value

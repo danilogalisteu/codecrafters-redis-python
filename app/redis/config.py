@@ -6,5 +6,4 @@ def get_config(name: str) -> str | None:
 
 
 def set_config(name: str, value: str) -> None:
-    global REDIS_CONFIG
     REDIS_CONFIG[name] = value
