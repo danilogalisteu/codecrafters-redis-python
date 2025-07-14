@@ -1,6 +1,7 @@
+from redis.rdb.constants import RDBOpCode
+from redis.rdb.length import decode_length, encode_length
+
 from .value import read_rdb_value, write_rdb_value
-from ..constants import RDBOpCode
-from ..length import decode_length, encode_length
 
 
 def read_rdb_size(buffer: bytes) -> tuple[int, int, int]:

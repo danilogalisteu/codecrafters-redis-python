@@ -1,8 +1,8 @@
 from typing import Any
 import struct
 
-from ..constants import RDBOpCode, RDBValue
-from ..string import decode_string, encode_string
+from redis.rdb.constants import RDBOpCode, RDBValue
+from redis.rdb.string import decode_string, encode_string
 
 
 def read_rdb_value(

@@ -1,4 +1,4 @@
-from ..constants import RDB_NAME, RDB_VERSION
+from redis.rdb.constants import RDB_NAME, RDB_VERSION
 
 
 def read_rdb_header(buffer: bytes) -> tuple[int, str]:

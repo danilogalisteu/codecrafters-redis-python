@@ -1,5 +1,5 @@
-from ..constants import RDBOpCode
-from ..string import decode_string, encode_string
+from redis.rdb.constants import RDBOpCode
+from redis.rdb.string import decode_string, encode_string
 
 
 def read_rdb_meta(buffer: bytes, pos: int = 0) -> tuple[int, dict[str, str]]:
