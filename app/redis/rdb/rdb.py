@@ -1,5 +1,3 @@
-from io import BufferedReader, BufferedWriter
-
 from .file.checksum import read_rdb_checksum, write_rdb_checksum
 from .file.crc64 import crc64_redis
 from .file.data import read_rdb_data, write_rdb_data
@@ -8,9 +6,8 @@ from .file.metadata import read_rdb_meta, write_rdb_meta
 
 
 def read_rdb(
-    in_file: BufferedReader,
+    buffer: bytes,
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
-    buffer = in_file.read()
     print(buffer)
 
     db_pos, db_version = read_rdb_header(buffer)
@@ -32,12 +29,11 @@ def read_rdb(
 
 
 def write_rdb(
-    out_file: BufferedWriter,
     meta: dict[str, str | int],
     data: dict[int, dict[str, dict[str, str | int | None]]],
-) -> None:
+) -> bytes:
     buffer = write_rdb_header()
     buffer += write_rdb_meta(meta)
     buffer += write_rdb_data(data)
     buffer += write_rdb_checksum(crc64_redis(buffer))
-    out_file.write(buffer)
+    return buffer
