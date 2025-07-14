@@ -23,6 +23,7 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
+    terminate = True
     send_message = ""
     match command:
         case "QUIT":
@@ -113,4 +114,4 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
         case _:
             logging.info("unhandled command %s", command)
 
-    return parsed_length, send_message + REDIS_SEPARATOR
+    return parsed_length, send_message + (REDIS_SEPARATOR if terminate else "")
