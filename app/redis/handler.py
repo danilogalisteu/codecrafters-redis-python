@@ -97,13 +97,12 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
         case "INFO":
             if len(arguments) == 0:
                 send_message = encode_redis(get_info_str())
+            elif all(isin_info(section) for section in arguments):
+                send_message = encode_redis(
+                    "\n\n".join([get_info_str(section) for section in arguments])
+                )
             else:
-                if all(isin_info(section) for section in arguments):
-                    send_message = encode_redis(
-                        "\n\n".join([get_info_str(section) for section in arguments])
-                    )
-                else:
-                    send_message = "-ERR unknown section for 'INFO' command"
+                send_message = "-ERR unknown section for 'INFO' command"
         case "REPLCONF":
             send_message = "+OK"
         case "PSYNC":
