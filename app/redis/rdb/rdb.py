@@ -30,7 +30,7 @@ def read_rdb(
 
 def write_rdb(
     out_file: BufferedWriter,
-    meta: dict[str, str],
+    meta: dict[str, str | int],
     data: dict[int, dict[str, dict[str, str | int | None]]],
 ) -> None:
     buffer = write_rdb_header()

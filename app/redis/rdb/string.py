@@ -1,4 +1,9 @@
-from .length import decode_length, decode_length_special, encode_length, encode_length_special
+from .length import (
+    decode_length,
+    decode_length_special,
+    encode_length,
+    encode_length_special,
+)
 
 
 def decode_string(data: bytes) -> tuple[int, str | int]:
