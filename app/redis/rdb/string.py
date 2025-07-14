@@ -1,4 +1,4 @@
-from .length import decode_length, decode_length_special, encode_length
+from .length import decode_length, decode_length_special, encode_length, encode_length_special
 
 
 def decode_string(data: bytes) -> tuple[int, str | int]:
@@ -16,5 +16,7 @@ def decode_string(data: bytes) -> tuple[int, str | int]:
     return spos + slen, data[spos : spos + slen].decode()
 
 
-def encode_string(value: str) -> bytes:
+def encode_string(value: str | int) -> bytes:
+    if isinstance(value, int):
+        return encode_length_special(value)
     return encode_length(len(value)) + value.encode()
