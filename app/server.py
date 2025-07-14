@@ -30,7 +30,10 @@ async def client_connected_cb(
                 break
 
             logging.info("[%s] Send %s", str(addr), repr(send_message))
-            writer.write(send_message.encode())
+            if isinstance(send_message, str):
+                writer.write(send_message.encode())
+            else:
+                writer.write(send_message)
             await writer.drain()
 
     logging.info("[%s] Closing connection", str(addr))

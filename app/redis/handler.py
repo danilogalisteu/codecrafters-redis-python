@@ -1,14 +1,14 @@
 import logging
 
 from .config import get_config, set_config
-from .database import get_keys, get_value, save_db, set_value
+from .database import get_keys, get_value, save_db, set_value, write_db
 from .info import get_info, get_info_str, isin_info
-from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
+from .resp import REDIS_SEPARATOR, decode_redis, encode_data, encode_redis
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
-def handle_redis(recv_message: str) -> tuple[int, str]:
+def handle_redis(recv_message: str) -> tuple[int, str | bytes]:
     command_line, parsed_length = decode_redis(recv_message)
     logging.debug(
         "buffer %d %d %s",
@@ -110,8 +110,10 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
             repl_id = get_info("replication", "master_replid")
             if repl_id == "":
                 send_message = "-ERR not master"
-            send_message = f"+FULLRESYNC {repl_id} 0"
+            send_message = (f"+FULLRESYNC {repl_id} 0" + REDIS_SEPARATOR).encode()
+            send_message += encode_data(write_db())
+            terminate = False
         case _:
             logging.info("unhandled command %s", command)
 
-    return parsed_length, send_message + (REDIS_SEPARATOR if terminate else "")
+    return parsed_length, send_message + (REDIS_SEPARATOR if terminate else b"")
