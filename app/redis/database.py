@@ -1,6 +1,6 @@
+import logging
 from pathlib import Path
 from time import time_ns
-import logging
 
 from .rdb import read_rdb, write_rdb
 

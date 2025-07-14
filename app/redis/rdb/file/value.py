@@ -1,5 +1,5 @@
-from typing import Any
 import struct
+from typing import Any
 
 from redis.rdb.constants import RDBOpCode, RDBValue
 from redis.rdb.string import decode_string, encode_string

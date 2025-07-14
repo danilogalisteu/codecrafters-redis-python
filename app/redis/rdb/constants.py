@@ -1,6 +1,5 @@
 from enum import IntEnum
 
-
 RDB_NAME = "REDIS"
 RDB_VERSION = "0011"
 
