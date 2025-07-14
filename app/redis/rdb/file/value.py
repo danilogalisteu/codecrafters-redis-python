@@ -46,7 +46,6 @@ def write_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
         buffer += bytes([RDBValue.STR])
         buffer += encode_string(key)
         buffer += encode_string(value)
-    else:
-        raise ValueError(f"unhandled RDB type {type(value)}")
+        return buffer
 
-    return buffer
+    raise TypeError(f"unhandled RDB type {type(value)}")
