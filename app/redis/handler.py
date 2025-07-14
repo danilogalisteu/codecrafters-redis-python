@@ -99,6 +99,8 @@ def handle_redis(recv_message: str) -> tuple[int, str]:
                     )
                 else:
                     send_message = "-ERR unknown section for 'INFO' command"
+        case "REPLCONF":
+            send_message = "+OK"
         case _:
             logging.info("unhandled command %s", command)
 
