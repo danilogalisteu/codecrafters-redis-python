@@ -37,17 +37,16 @@ async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter)
 async def send_write(send_message: str) -> None:
     logging.info("Replicating message %s...", repr(send_message))
     closed = []
-    for _, writer in REDIS_SLAVES:
+    for reader, writer in REDIS_SLAVES:
         logging.info("...to %s", str(writer.get_extra_info("peername")))
         if not writer.is_closing():
             writer.write(send_message.encode())
             await writer.drain()
         else:
-            closed.append(writer)
-    for writer in closed:
-        if writer in REDIS_SLAVES:
-            logging.info("Removing slave %s", repr(writer))
-            REDIS_SLAVES.remove(writer)
+            closed.append((reader, writer))
+    for reader, writer in closed:
+        logging.info("Removing slave %s", repr(writer))
+        REDIS_SLAVES.discard((reader, writer))
 
 
 async def wait_slaves(master_offset: int, num_slaves: int, timeout_ms: int) -> int:
