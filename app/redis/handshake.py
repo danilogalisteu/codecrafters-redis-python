@@ -14,7 +14,7 @@ async def send_handshake(
     writer.write(message.encode())
     await writer.drain()
 
-    data = await reader.read()
+    data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     assert data.decode().removesuffix(REDIS_SEPARATOR) == "+PONG"
 
@@ -25,7 +25,7 @@ async def send_handshake(
     writer.write(message.encode())
     await writer.drain()
 
-    data = await reader.read()
+    data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     assert data.decode().removesuffix(REDIS_SEPARATOR) == "+OK"
 
@@ -34,7 +34,7 @@ async def send_handshake(
     writer.write(message.encode())
     await writer.drain()
 
-    data = await reader.read()
+    data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     assert data.decode().removesuffix(REDIS_SEPARATOR) == "+OK"
 
@@ -43,7 +43,7 @@ async def send_handshake(
     writer.write(message.encode())
     await writer.drain()
 
-    data = await reader.read()
+    data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
 
     recv_message = data.decode().removesuffix(REDIS_SEPARATOR).split(" ")
