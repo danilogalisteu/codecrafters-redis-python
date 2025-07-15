@@ -17,7 +17,8 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
     while True:
         if len(recv_message) > 0:
             logging.info("Master recv  %s", repr(recv_message))
-            while True:
+            send_message = ""
+            while len(recv_message) > 0:
                 parsed_length, send_message, _, send_replica = handle_redis(recv_message)
                 recv_message = recv_message[parsed_length:]
                 if send_replica:
