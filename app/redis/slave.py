@@ -3,21 +3,41 @@ import logging
 
 from .database import write_db
 from .rdb.data import encode_data
+from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 
-REDIS_SLAVES: list[asyncio.StreamWriter] = []
+REDIS_SLAVES: set[tuple[asyncio.StreamReader, asyncio.StreamWriter]] = set()
 
 
-async def init_slave(writer: asyncio.StreamWriter) -> None:
+async def init_slave(
+    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+) -> None:
     logging.info("Adding slave %s", str(writer.get_extra_info("peername")))
     writer.write(encode_data(write_db()))
     await writer.drain()
-    REDIS_SLAVES.append(writer)
+    REDIS_SLAVES.add((reader, writer))
+
+
+async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> int:
+    send_message = encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR
+    writer.write(send_message.encode())
+    await writer.drain()
+
+    recv_message = ""
+    while True:
+        recv_message += (await reader.read(100)).decode()
+        command_line, parsed_length = decode_redis(recv_message)
+        if parsed_length > 0:
+            break
+
+    assert command_line[0] == "REPLCONF"
+    assert command_line[1] == "ACK"
+    return int(command_line[2])
 
 
 async def send_write(send_message: str) -> None:
     logging.info("Replicating message %s...", repr(send_message))
     closed = []
-    for writer in REDIS_SLAVES:
+    for _, writer in REDIS_SLAVES:
         logging.info("...to %s", str(writer.get_extra_info("peername")))
         if not writer.is_closing():
             writer.write(send_message.encode())
@@ -30,14 +50,13 @@ async def send_write(send_message: str) -> None:
             REDIS_SLAVES.remove(writer)
 
 
-async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
-    async def async_wait(num: int) -> None:
-        while len(REDIS_SLAVES) < num:
-            await asyncio.sleep(0)
-
-    await asyncio.wait_for(
-        async_wait(num_slaves),
-        float(timeout_ms) / 1000,
-    )
-
-    return len(REDIS_SLAVES)
+async def wait_slaves(master_offset: int, num_slaves: int, timeout_ms: int) -> int:
+    logging.info("Checking offsets %d", master_offset)
+    tasks = [
+        asyncio.create_task(get_offset(reader, writer))
+        for reader, writer in REDIS_SLAVES
+    ]
+    done, _ = await asyncio.wait(tasks, timeout=float(timeout_ms) / 1000)
+    slave_offsets = [t.result for t in done]
+    logging.info("Slave offsets %s", repr(slave_offsets))
+    return len([1 for o in slave_offsets if o == master_offset])
