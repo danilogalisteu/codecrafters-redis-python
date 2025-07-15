@@ -7,7 +7,7 @@ def decode_data(buffer: bytes) -> bytes:
     logging.info("buffer %d %s", len(buffer), repr(buffer))
     if len(buffer) < 1:
         return b""
-    if buffer[0] != IDAggregate.BSTRING:
+    if chr(buffer[0]) != IDAggregate.BSTRING:
         logging.info("not expected")
         return b""
 
