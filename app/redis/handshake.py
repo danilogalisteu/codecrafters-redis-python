@@ -44,13 +44,16 @@ async def send_handshake(
     await writer.drain()
 
     data = await reader.read(100)
-    logging.info("Received %s", repr(data.decode()))
+    recv_sep = data.find(REDIS_SEPARATOR.encode())
+    recv_message = data[: recv_sep + len(REDIS_SEPARATOR.encode())]
+    logging.info("Received %s", repr(recv_message.decode()))
 
-    recv_message = data.decode().removesuffix(REDIS_SEPARATOR).split(" ")
+    recv_message = recv_message.decode().removesuffix(REDIS_SEPARATOR).split(" ")
     assert recv_message[0] == "+FULLRESYNC"
     master_id, master_offset = recv_message[1], int(recv_message[2])
 
-    data = await reader.read()
+    data = data[recv_sep + len(REDIS_SEPARATOR.encode()) :]
+    data += await reader.read(100)
     logging.info("Received %s", repr(data))
 
     read_db(decode_data(data))
