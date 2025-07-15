@@ -27,6 +27,6 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
             if send_message == REDIS_QUIT:
                 break
 
-    print("Close the connection")
+    logging.info("Close the connection")
     writer.close()
     await writer.wait_closed()

@@ -1,3 +1,5 @@
+import logging
+
 from .file.checksum import read_rdb_checksum, write_rdb_checksum
 from .file.crc64 import crc64_redis
 from .file.data import read_rdb_data, write_rdb_data
@@ -8,7 +10,7 @@ from .file.metadata import read_rdb_meta, write_rdb_meta
 def read_rdb(
     buffer: bytes,
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
-    print(buffer)
+    logging.debug("%s", repr(buffer))
 
     db_pos, db_version = read_rdb_header(buffer)
     db_pos, db_meta = read_rdb_meta(buffer, db_pos)
@@ -22,9 +24,9 @@ def read_rdb(
 
     db_calc = crc64_redis(buffer[:db_pos])
     db_pos, db_check = read_rdb_checksum(buffer, db_pos)
-    print("checksum", db_check, db_calc)
+    logging.debug("checksum %d %d", db_check, db_calc)
 
-    print(db_data)
+    logging.debug("%s", repr(db_data))
     return db_meta, db_data
 
 
