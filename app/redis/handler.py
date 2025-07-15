@@ -22,6 +22,15 @@ def handle_redis(
         "Command line %s",
         str(command_line),
     )
+    if parsed_length == 0:
+        return (
+            parsed_length,
+            REDIS_SEPARATOR,
+            False,
+            "",
+            "",
+        )
+
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
