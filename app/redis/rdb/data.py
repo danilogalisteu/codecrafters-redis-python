@@ -1,18 +1,18 @@
 from app.redis.resp import REDIS_SEPARATOR, IDAggregate
 
-from .constants import RDB_NAME
 
+def decode_data(buffer: bytes) -> bytes:
+    if len(buffer) < 1:
+        return b""
+    if buffer[0] != IDAggregate.BSTRING:
+        return b""
 
-def decode_data(data: bytes) -> bytes:
-    if len(data) < 1:
+    rdb_length_end = buffer.find(REDIS_SEPARATOR.encode())
+    rdb_length = int(buffer[1:rdb_length_end])
+    rdb_data_start = rdb_length_end + len(REDIS_SEPARATOR.encode())
+    if len(buffer) < rdb_data_start + rdb_length:
         return b""
-    if data[0] != IDAggregate.BSTRING:
-        return b""
-    rdb_start = data.find(RDB_NAME.encode())
-    rdb_length = int(data[1:rdb_start])
-    if len(data) < rdb_start + rdb_length:
-        return b""
-    return data[rdb_start:]
+    return buffer[rdb_data_start:]
 
 
 def encode_data(data: bytes) -> bytes:
