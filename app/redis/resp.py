@@ -83,6 +83,7 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
             if message_next == -1:
                 return [], message_counter
             array_length = int(message[message_counter + 1 : message_next])
+            message_next += REDIS_SEPARATOR_LENGTH
 
             array_res = []
             logging.debug(
@@ -93,10 +94,8 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                 message,
             )
             while len(array_res) < array_length:
-                array_value, message_next_val = decode_redis(
-                    message, message_next + REDIS_SEPARATOR_LENGTH
-                )
-                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                array_value, message_next_val = decode_redis(message, message_next)
+                if message_next_val == message_next:
                     return [], message_counter
                 message_next = message_next_val
                 array_res.append(array_value)
@@ -108,13 +107,14 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                     array_value,
                 )
 
-            return array_res, message_next + REDIS_SEPARATOR_LENGTH
+            return array_res, message_next
 
         case IDAggregate.MAP:
             message_next = message.find(REDIS_SEPARATOR, message_counter + 1)
             if message_next == -1:
                 return {}, message_counter
             map_length = int(message[message_counter + 1 : message_next])
+            message_next += REDIS_SEPARATOR_LENGTH
 
             map_res = {}
             logging.debug(
@@ -125,16 +125,12 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                 message,
             )
             while len(map_res) < map_length:
-                map_key, message_next_val = decode_redis(
-                    message, message_next + REDIS_SEPARATOR_LENGTH
-                )
-                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                map_key, message_next_val = decode_redis(message, message_next)
+                if message_next_val == message_next:
                     return {}, message_counter
                 message_next = message_next_val
-                map_value, message_next_val = decode_redis(
-                    message, message_next + REDIS_SEPARATOR_LENGTH
-                )
-                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                map_value, message_next_val = decode_redis(message, message_next)
+                if message_next_val == message_next:
                     return {}, message_counter
                 message_next = message_next_val
                 map_res[map_key] = map_value
@@ -147,7 +143,7 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                     map_value,
                 )
 
-            return map_res, message_next + REDIS_SEPARATOR_LENGTH
+            return map_res, message_next
 
         case _:
             raise ValueError("unknown redis ID", recv_id)
