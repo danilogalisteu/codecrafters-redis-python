@@ -59,6 +59,7 @@ async def send_handshake(
     rdb_data = b""
     while not rdb_data:
         data += await reader.read(100)
+        logging.info("Received %s", len(data), repr(data))
         rdb_data = decode_data(data)
 
     read_db(rdb_data)
