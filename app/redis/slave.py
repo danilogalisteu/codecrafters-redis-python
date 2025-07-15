@@ -24,6 +24,7 @@ async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter)
 
     recv_message = ""
     while True:
+        logging.info("get_offset reader.read %s", str(writer.get_extra_info("peername")))
         recv_message += (await reader.read(100)).decode()
         command_line, parsed_length = decode_redis(recv_message)
         if parsed_length > 0:
