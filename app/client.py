@@ -15,19 +15,22 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
     logging.info("Connected master %s %d", master_id, master_offset)
     logging.warning("Master extra data %s", repr(recv_message))
 
+    master_offset = 0
     while True:
         if len(recv_message) > 0:
             logging.info("Master recv  %s", repr(recv_message))
             send_message = ""
             while len(recv_message) > 0:
                 parsed_length, send_message, _, send_replica = handle_redis(
-                    recv_message
+                    recv_message, master_offset
                 )
                 recv_message = recv_message[parsed_length:]
                 if send_replica:
                     logging.info("Master send %s", repr(send_replica))
                     writer.write(send_replica.encode())
                     await writer.drain()
+                    master_offset = 0
+                master_offset += parsed_length
                 if (parsed_length == 0) or (send_message == REDIS_QUIT):
                     break
 
