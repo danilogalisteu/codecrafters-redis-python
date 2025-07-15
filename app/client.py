@@ -29,7 +29,6 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
                     logging.info("Master send %s", repr(send_master))
                     writer.write(send_master.encode())
                     await writer.drain()
-                    master_offset = 0
                 master_offset += parsed_length
                 if (parsed_length == 0) or (send_message == REDIS_QUIT):
                     break
