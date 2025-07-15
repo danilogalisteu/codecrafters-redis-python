@@ -1,14 +1,12 @@
 from .config import set_config
 from .database import init_db
 from .info import set_info
-from .replication import send_handshake
 
 
 async def setup_redis(
-    port: int,
     dirname: str | None,
     dbfilename: str | None = None,
-    replicaof: str | None = None,
+    is_slave: bool = False,
 ) -> None:
     if dirname:
         set_config("dir", dirname)
@@ -18,10 +16,8 @@ async def setup_redis(
     if dirname and dbfilename:
         init_db(dirname, dbfilename)
 
-    if replicaof:
+    if is_slave:
         set_info("replication", "role", "slave")
-        master_host, master_port = replicaof.split(" ")
-        await send_handshake(master_host, int(master_port), port)
     else:
         set_info("replication", "role", "master")
         set_info(
