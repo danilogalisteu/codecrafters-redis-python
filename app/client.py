@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from .redis import REDIS_QUIT, REDIS_SEPARATOR, handle_redis
+from .redis import REDIS_QUIT, handle_redis
 from .redis.handshake import send_handshake
 
 

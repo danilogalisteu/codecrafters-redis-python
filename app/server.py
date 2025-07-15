@@ -4,7 +4,6 @@ import logging
 from .client import run_client
 from .redis import (
     REDIS_QUIT,
-    REDIS_SEPARATOR,
     handle_redis,
     init_slave,
     send_write,
@@ -35,7 +34,7 @@ async def client_connected_cb(
             )
             recv_message = recv_message[parsed_length:]
 
-            if send_message == REDIS_SEPARATOR:
+            if parsed_length == 0:
                 continue
             if send_message == REDIS_QUIT:
                 break

@@ -111,7 +111,6 @@ def handle_redis(recv_message: str) -> tuple[int, str, bool, str]:
                 send_message = "+OK"
             elif arguments[0].upper() == "GETACK":
                 send_replica = encode_redis(["REPLCONF", "ACK", 0]) + REDIS_SEPARATOR
-
         case "PSYNC":
             repl_id = get_info("replication", "master_replid")
             if repl_id == "":
