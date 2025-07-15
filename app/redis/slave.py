@@ -8,7 +8,7 @@ REDIS_SLAVES: list[asyncio.StreamWriter] = []
 
 
 async def init_slave(writer: asyncio.StreamWriter) -> None:
-    logging.info("Adding slave %s", repr(writer))
+    logging.info("Adding slave %s", str(writer.get_extra_info("peername")))
     writer.write(encode_data(write_db()))
     await writer.drain()
     REDIS_SLAVES.append(writer)
