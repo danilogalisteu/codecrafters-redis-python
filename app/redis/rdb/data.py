@@ -15,7 +15,9 @@ def decode_data(buffer: bytes) -> tuple[bytes, int]:
     rdb_data_start = rdb_length_end + len(REDIS_SEPARATOR.encode())
     if len(buffer) < rdb_data_start + rdb_length:
         return b"", 0
-    return buffer[rdb_data_start : rdb_data_start + rdb_length], rdb_data_start + rdb_length
+    return buffer[
+        rdb_data_start : rdb_data_start + rdb_length
+    ], rdb_data_start + rdb_length
 
 
 def encode_data(data: bytes) -> bytes:
