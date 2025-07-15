@@ -28,7 +28,7 @@ def get_value(key: str) -> str:
     value = data.get("value", "")
     exp = data.get("exp", None)
     if exp is not None and get_time > exp:
-        logging.debug("GET expired key %s", key)
+        logging.info("GET expired key %s", key)
         del REDIS_DB_DATA[REDIS_DB_NUM][key]
         return ""
     return value
