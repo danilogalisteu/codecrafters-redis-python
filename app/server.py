@@ -29,7 +29,7 @@ async def client_connected_cb(
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", str(addr), repr(recv_message))
-            parsed_length, send_message, is_replica, send_replica = handle_redis(
+            parsed_length, send_message, is_replica, send_replica, _ = handle_redis(
                 recv_message
             )
             recv_message = recv_message[parsed_length:]
