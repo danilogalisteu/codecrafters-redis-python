@@ -10,7 +10,7 @@ REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 def handle_redis(
     recv_message: str, master_offset: int = 0
-) -> tuple[int, str, bool, str]:
+) -> tuple[int, str, bool, str, str]:
     command_line, parsed_length = decode_redis(recv_message)
     logging.debug(
         "buffer %d %d %s",
@@ -28,6 +28,7 @@ def handle_redis(
     is_replica = False
     send_message = ""
     send_replica = ""
+    send_master = ""
     match command:
         case "QUIT":
             send_message = REDIS_SEPARATOR
@@ -112,7 +113,7 @@ def handle_redis(
             if len(arguments) < 1:
                 send_message = "-ERR wrong number of arguments for 'REPLCONF' command"
             elif arguments[0].upper() == "GETACK":
-                send_replica = (
+                send_master = (
                     encode_redis(["REPLCONF", "ACK", str(master_offset)])
                     + REDIS_SEPARATOR
                 )
@@ -127,4 +128,10 @@ def handle_redis(
         case _:
             logging.info("unhandled command %s", command)
 
-    return parsed_length, send_message + REDIS_SEPARATOR, is_replica, send_replica
+    return (
+        parsed_length,
+        send_message + REDIS_SEPARATOR,
+        is_replica,
+        send_replica,
+        send_master,
+    )
