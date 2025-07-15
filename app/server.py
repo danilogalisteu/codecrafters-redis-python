@@ -2,7 +2,14 @@ import asyncio
 import logging
 
 from .client import run_client
-from .redis import REDIS_QUIT, REDIS_SEPARATOR, handle_redis, init_slave, send_write, setup_redis
+from .redis import (
+    REDIS_QUIT,
+    REDIS_SEPARATOR,
+    handle_redis,
+    init_slave,
+    send_write,
+    setup_redis,
+)
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
@@ -23,7 +30,9 @@ async def client_connected_cb(
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", str(addr), repr(recv_message))
-            parsed_length, send_message, is_replica, send_replica = handle_redis(recv_message)
+            parsed_length, send_message, is_replica, send_replica = handle_redis(
+                recv_message
+            )
             recv_message = recv_message[parsed_length:]
 
             if send_message == REDIS_SEPARATOR:
