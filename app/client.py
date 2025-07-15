@@ -9,10 +9,9 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
     logging.info("Connecting to master on %s:%d", master_host, master_port)
     reader, writer = await asyncio.open_connection(master_host, master_port)
 
-    master_id, master_offset = await send_handshake(reader, writer, slave_port)
+    master_id, master_offset, recv_message = await send_handshake(reader, writer, slave_port)
     logging.info("Connected master %s %d", master_id, master_offset)
 
-    recv_message = ""
     while True:
         await asyncio.sleep(0)
         recv_message += (await reader.read(100)).decode()

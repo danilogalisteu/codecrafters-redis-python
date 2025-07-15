@@ -8,7 +8,7 @@ from .resp import REDIS_SEPARATOR, encode_redis
 
 async def send_handshake(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter, slave_port: int
-) -> tuple[str, int]:
+) -> tuple[str, int, str]:
     message = encode_redis(["PING"]) + REDIS_SEPARATOR
     logging.info("Sending %s", repr(message))
     writer.write(message.encode())
@@ -56,11 +56,12 @@ async def send_handshake(
     data += await reader.read(100)
     logging.info("Received %d %s", len(data), repr(data))
 
+    pos = 0
     rdb_data = b""
-    while not rdb_data:
+    while pos == 0:
         data += await reader.read(100)
-        rdb_data = decode_data(data)
+        rdb_data, pos = decode_data(data)
 
     read_db(rdb_data)
 
-    return master_id, master_offset
+    return master_id, master_offset, data[pos:].decode()
