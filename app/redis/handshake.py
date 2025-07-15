@@ -56,14 +56,14 @@ async def send_handshake(
     data += await reader.read(100)
     logging.info("Received %d %s", len(data), repr(data))
 
-    pos = 0
     rdb_data = b""
     while True:
         rdb_data, pos = decode_data(data)
         if pos > 0:
+            data = data[pos:]
             break
         data += await reader.read(100)
 
     read_db(rdb_data)
 
-    return master_id, master_offset, data[pos:].decode()
+    return master_id, master_offset, data.decode()
