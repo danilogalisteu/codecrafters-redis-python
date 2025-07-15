@@ -10,15 +10,15 @@ from .file.metadata import read_rdb_meta, write_rdb_meta
 def read_rdb(
     buffer: bytes,
 ) -> tuple[dict[str, str], dict[int, dict[str, dict[str, str | int | None]]]]:
-    logging.debug("%s", repr(buffer))
+    logging.warning("%s", repr(buffer))
 
     db_pos, db_version = read_rdb_header(buffer)
-    logging.debug("version %s", repr(db_version))
+    logging.warning("version %s", repr(db_version))
     db_pos, db_meta = read_rdb_meta(buffer, db_pos)
-    logging.debug("meta %s", repr(db_meta))
+    logging.warning("meta %s", repr(db_meta))
 
     db_data = {}
-    logging.debug("data %s", repr(buffer[db_pos:]))
+    logging.warning("data %s", repr(buffer[db_pos:]))
     while True:
         db_pos, db_num, db_num_data = read_rdb_data(buffer, db_pos)
         if db_num is None:
@@ -27,9 +27,9 @@ def read_rdb(
 
     db_calc = crc64_redis(buffer[:db_pos])
     db_pos, db_check = read_rdb_checksum(buffer, db_pos)
-    logging.debug("checksum %d %d", db_check, db_calc)
+    logging.warning("checksum %d %d", db_check, db_calc)
 
-    logging.debug("%s", repr(db_data))
+    logging.warning("%s", repr(db_data))
     return db_meta, db_data
 
 
