@@ -5,7 +5,7 @@ import logging
 from .server import REDIS_PORT, run_server
 
 logging.basicConfig(
-    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.INFO
+    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.DEBUG
 )
 
 
