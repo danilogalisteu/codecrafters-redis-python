@@ -4,12 +4,12 @@ from .config import get_config, set_config
 from .database import get_keys, get_value, save_db, set_value
 from .info import get_info, get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
-from .slave import get_num_slaves
+from .slave import wait_slaves
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
-def handle_redis(
+async def handle_redis(
     recv_message: str, master_offset: int = 0
 ) -> tuple[int, str, bool, str, str]:
     command_line, parsed_length = decode_redis(recv_message)
@@ -144,7 +144,9 @@ def handle_redis(
                     + REDIS_SEPARATOR
                 )
             else:
-                num_slaves = get_num_slaves()
+                exp_slaves = int(arguments[0])
+                timeout_ms = int(arguments[1])
+                num_slaves = await wait_slaves(exp_slaves, timeout_ms)
                 send_message = encode_redis(num_slaves)
         case _:
             logging.info("unhandled command %s", command)
