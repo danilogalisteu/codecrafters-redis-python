@@ -13,9 +13,12 @@ def read_rdb(
     logging.debug("%s", repr(buffer))
 
     db_pos, db_version = read_rdb_header(buffer)
+    logging.debug("version %s", repr(db_version))
     db_pos, db_meta = read_rdb_meta(buffer, db_pos)
+    logging.debug("meta %s", repr(db_meta))
 
     db_data = {}
+    logging.debug("data %s", repr(buffer[db_pos:]))
     while True:
         db_pos, db_num, db_num_data = read_rdb_data(buffer, db_pos)
         if db_num is None:
