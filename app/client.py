@@ -1,0 +1,32 @@
+import asyncio
+import logging
+
+from .redis import REDIS_QUIT, REDIS_SEPARATOR, handle_redis
+from .redis.handshake import send_handshake
+
+
+async def run_client(master_host: str, master_port: int, slave_port: int) -> None:
+    logging.info("Connecting to master on %s:%d", master_host, master_port)
+    reader, writer = await asyncio.open_connection(master_host, master_port)
+
+    master_id, master_offset = await send_handshake(reader, writer, slave_port)
+    logging.info("Connected master %s %d", master_id, master_offset)
+
+    recv_message = ""
+    while True:
+        await asyncio.sleep(0)
+        recv_message += (await reader.read(100)).decode()
+
+        if len(recv_message) > 0:
+            logging.info("Master recv  %s", repr(recv_message))
+            parsed_length, send_message, _ = handle_redis(recv_message)
+            recv_message = recv_message[parsed_length:]
+
+            if send_message == REDIS_SEPARATOR:
+                continue
+            if send_message == REDIS_QUIT:
+                break
+
+    print("Close the connection")
+    writer.close()
+    await writer.wait_closed()
