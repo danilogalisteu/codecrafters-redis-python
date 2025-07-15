@@ -93,7 +93,9 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                 message,
             )
             while len(array_res) < array_length:
-                array_value, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                array_value, message_next_val = decode_redis(
+                    message, message_next + REDIS_SEPARATOR_LENGTH
+                )
                 if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
                     return [], message_counter
                 message_next = message_next_val
@@ -123,11 +125,15 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                 message,
             )
             while len(map_res) < map_length:
-                map_key, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                map_key, message_next_val = decode_redis(
+                    message, message_next + REDIS_SEPARATOR_LENGTH
+                )
                 if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
                     return {}, message_counter
                 message_next = message_next_val
-                map_value, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                map_value, message_next_val = decode_redis(
+                    message, message_next + REDIS_SEPARATOR_LENGTH
+                )
                 if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
                     return {}, message_counter
                 message_next = message_next_val
