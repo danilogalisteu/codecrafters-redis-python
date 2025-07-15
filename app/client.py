@@ -13,8 +13,6 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
     logging.info("Connected master %s %d", master_id, master_offset)
 
     while True:
-        await asyncio.sleep(0)
-
         if len(recv_message) > 0:
             logging.info("Master recv  %s", repr(recv_message))
             parsed_length, send_message, _, _ = handle_redis(recv_message)
@@ -25,6 +23,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
             if send_message == REDIS_QUIT:
                 break
 
+        await asyncio.sleep(0)
         recv_message += (await reader.read()).decode()
 
     logging.info("Close the connection")
