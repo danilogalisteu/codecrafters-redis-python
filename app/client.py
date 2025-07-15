@@ -13,6 +13,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
         reader, writer, slave_port
     )
     logging.info("Connected master %s %d", master_id, master_offset)
+    logging.warning("Master extra data %s", repr(recv_message))
 
     while True:
         if len(recv_message) > 0:
