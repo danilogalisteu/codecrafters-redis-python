@@ -43,6 +43,8 @@ def load_db(dirname: str, dbfilename: str) -> None:
 def read_db(data: bytes) -> None:
     global REDIS_META, REDIS_DB_DATA
     REDIS_META, REDIS_DB_DATA = read_rdb(data)
+    if not REDIS_DB_DATA:
+        REDIS_DB_DATA[REDIS_DB_NUM] = {}
     logging.info("updated db meta %s", repr(REDIS_META))
     logging.info("updated db data %s", repr(REDIS_DB_DATA))
 
