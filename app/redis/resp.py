@@ -56,61 +56,63 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
     recv_id = message[message_counter]
 
     if recv_id in IDSimple:
-        message_counter += 1
-        message_next = message.find(REDIS_SEPARATOR, message_counter)
-        value_next = message[message_counter:message_next]
-        message_counter = message_next + REDIS_SEPARATOR_LENGTH
-        return decode_simple(recv_id, value_next), message_counter
+        message_next = message.find(REDIS_SEPARATOR, message_counter + 1)
+        if message_next == -1:
+            return "", message_counter
+        value_next = message[message_counter + 1 : message_next]
+        return decode_simple(recv_id, value_next), message_next + REDIS_SEPARATOR_LENGTH
 
     match recv_id:
         case IDAggregate.BSTRING:
-            message_counter += 1
-            message_next = message.find(REDIS_SEPARATOR, message_counter)
-            value_next = message[message_counter:message_next]
-            message_counter = message_next + REDIS_SEPARATOR_LENGTH
-            bstr_length = int(value_next)
+            message_next = message.find(REDIS_SEPARATOR, message_counter + 1)
+            if message_next == -1:
+                return "", message_counter
+            bstr_length = int(message[message_counter + 1 : message_next])
+            value_counter = message_next + REDIS_SEPARATOR_LENGTH
 
-            message_next = message.find(REDIS_SEPARATOR, message_counter)
-            bstr_value = message[message_counter:message_next]
-            assert message_next == message_counter + bstr_length
-            message_counter = message_next + REDIS_SEPARATOR_LENGTH
+            message_next = message.find(REDIS_SEPARATOR, value_counter)
+            if message_next == -1:
+                return "", message_counter
+            bstr_value = message[value_counter:message_next]
+            assert message_next == value_counter + bstr_length
             logging.debug("new bstr_value %s", bstr_value)
-            return bstr_value, message_counter
+            return bstr_value, message_next + REDIS_SEPARATOR_LENGTH
 
         case IDAggregate.ARRAY:
-            message_counter += 1
-            message_next = message.find(REDIS_SEPARATOR, message_counter)
-            value_next = message[message_counter:message_next]
-            message_counter = message_next + REDIS_SEPARATOR_LENGTH
-            array_length = int(value_next)
+            message_next = message.find(REDIS_SEPARATOR, message_counter + 1)
+            if message_next == -1:
+                return [], message_counter
+            array_length = int(message[message_counter + 1 : message_next])
 
             array_res = []
             logging.debug(
                 "new array, length %d %d %d %s",
                 array_length,
                 len(array_res),
-                message_counter,
+                message_next,
                 message,
             )
             while len(array_res) < array_length:
-                array_value, message_counter = decode_redis(message, message_counter)
+                array_value, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                    return [], message_counter
+                message_next = message_next_val
                 array_res.append(array_value)
                 logging.debug(
                     "new array_value %d %d %d %s",
                     array_length,
                     len(array_res),
-                    message_counter,
+                    message_next,
                     array_value,
                 )
 
-            return array_res, message_counter
+            return array_res, message_next + REDIS_SEPARATOR_LENGTH
 
         case IDAggregate.MAP:
-            message_counter += 1
-            message_next = message.find(REDIS_SEPARATOR, message_counter)
-            value_next = message[message_counter:message_next]
-            message_counter = message_next + REDIS_SEPARATOR_LENGTH
-            map_length = int(value_next)
+            message_next = message.find(REDIS_SEPARATOR, message_counter + 1)
+            if message_next == -1:
+                return {}, message_counter
+            map_length = int(message[message_counter + 1 : message_next])
 
             map_res = {}
             logging.debug(
@@ -121,8 +123,14 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                 message,
             )
             while len(map_res) < map_length:
-                map_key, message_counter = decode_redis(message, message_counter)
-                map_value, message_counter = decode_redis(message, message_counter)
+                map_key, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                    return {}, message_counter
+                message_next = message_next_val
+                map_value, message_next_val = decode_redis(message, message_next + REDIS_SEPARATOR_LENGTH)
+                if message_next_val == message_next + REDIS_SEPARATOR_LENGTH:
+                    return {}, message_counter
+                message_next = message_next_val
                 map_res[map_key] = map_value
                 logging.debug(
                     "new map item, length %d %d %d %s %s",
@@ -133,7 +141,7 @@ def decode_redis(message: str, message_counter: int = 0) -> tuple[Any, int]:
                     map_value,
                 )
 
-            return map_res, message_counter
+            return map_res, message_next + REDIS_SEPARATOR_LENGTH
 
         case _:
             raise ValueError("unknown redis ID", recv_id)
