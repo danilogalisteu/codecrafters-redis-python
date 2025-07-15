@@ -4,6 +4,7 @@ from .config import get_config, set_config
 from .database import get_keys, get_value, save_db, set_value
 from .info import get_info, get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
+from .slave import get_num_slaves
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
@@ -134,6 +135,17 @@ def handle_redis(
                 send_message = "-ERR not master"
             send_message = f"+FULLRESYNC {repl_id} 0"
             is_replica = True
+        case "WAIT":
+            if len(arguments) < 2:
+                send_message = "-ERR wrong number of arguments for 'WAIT' command"
+            elif arguments[0].upper() == "GETACK":
+                send_master = (
+                    encode_redis(["REPLCONF", "ACK", str(master_offset)])
+                    + REDIS_SEPARATOR
+                )
+            else:
+                num_slaves = get_num_slaves()
+                send_message = encode_redis(num_slaves)
         case _:
             logging.info("unhandled command %s", command)
 

@@ -13,6 +13,10 @@ async def init_slave(writer: asyncio.StreamWriter) -> None:
     REDIS_SLAVES.append(writer)
 
 
+def get_num_slaves() -> int:
+    return len(REDIS_SLAVES)
+
+
 async def send_write(send_message: str) -> None:
     logging.info("Replicating message %s", repr(send_message))
     closed = []
