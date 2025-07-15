@@ -8,7 +8,7 @@ from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
-def handle_redis(recv_message: str) -> tuple[int, str, bool]:
+def handle_redis(recv_message: str) -> tuple[int, str, bool, str]:
     command_line, parsed_length = decode_redis(recv_message)
     logging.debug(
         "buffer %d %d %s",
@@ -25,6 +25,7 @@ def handle_redis(recv_message: str) -> tuple[int, str, bool]:
 
     is_replica = False
     send_message = ""
+    send_replica = ""
     match command:
         case "QUIT":
             send_message = REDIS_SEPARATOR
@@ -51,6 +52,7 @@ def handle_redis(recv_message: str) -> tuple[int, str, bool]:
                     [arg.upper() for arg in arguments[2:]],
                 )
                 send_message = encode_redis(res)
+                send_replica = encode_redis(command_line.split(" ")) + REDIS_SEPARATOR
         case "GET":
             if len(arguments) != 1:
                 send_message = "-ERR wrong number of arguments for 'get' command"
@@ -115,4 +117,4 @@ def handle_redis(recv_message: str) -> tuple[int, str, bool]:
         case _:
             logging.info("unhandled command %s", command)
 
-    return parsed_length, send_message + REDIS_SEPARATOR, is_replica
+    return parsed_length, send_message + REDIS_SEPARATOR, is_replica, send_replica
