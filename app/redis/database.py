@@ -9,13 +9,6 @@ REDIS_DB_DATA = {REDIS_DB_NUM: {}}
 REDIS_META = {}
 
 
-def init_db(dirname: str, dbfilename: str) -> None:
-    global REDIS_META, REDIS_DB_DATA
-    db_fn = Path(dirname) / dbfilename
-    if db_fn.is_file():
-        REDIS_META, REDIS_DB_DATA = read_rdb(db_fn.read_bytes())
-
-
 def get_current_time() -> int:
     """Current time in ms"""
     return int(time_ns() / 1e6)
@@ -39,6 +32,17 @@ def get_value(key: str) -> str:
         del REDIS_DB_DATA[REDIS_DB_NUM][key]
         return ""
     return value
+
+
+def load_db(dirname: str, dbfilename: str) -> None:
+    db_fn = Path(dirname) / dbfilename
+    if db_fn.is_file():
+        read_db(db_fn.read_bytes())
+
+
+def read_db(data: bytes) -> None:
+    global REDIS_META, REDIS_DB_DATA
+    REDIS_META, REDIS_DB_DATA = read_rdb(data)
 
 
 def save_db(dirname: str, dbfilename: str) -> None:

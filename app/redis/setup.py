@@ -1,5 +1,5 @@
 from .config import set_config
-from .database import init_db
+from .database import load_db
 from .info import set_info
 
 
@@ -14,7 +14,7 @@ async def setup_redis(
         set_config("dbfilename", dbfilename)
 
     if dirname and dbfilename:
-        init_db(dirname, dbfilename)
+        load_db(dirname, dbfilename)
 
     if is_slave:
         set_info("replication", "role", "slave")
