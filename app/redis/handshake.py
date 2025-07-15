@@ -58,9 +58,11 @@ async def send_handshake(
 
     pos = 0
     rdb_data = b""
-    while pos == 0:
-        data += await reader.read(100)
+    while True:
         rdb_data, pos = decode_data(data)
+        if pos > 0:
+            break
+        data += await reader.read(100)
 
     read_db(rdb_data)
 
