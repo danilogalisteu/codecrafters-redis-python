@@ -8,25 +8,26 @@ REDIS_SLAVES: list[asyncio.StreamWriter] = []
 
 
 async def init_slave(writer: asyncio.StreamWriter) -> None:
+    logging.info("Adding slave %s", repr(writer))
     writer.write(encode_data(write_db()))
     await writer.drain()
     REDIS_SLAVES.append(writer)
 
 
 async def send_write(send_message: str) -> None:
-    logging.info("Replicating message %s", repr(send_message))
+    logging.info("Replicating message %s...", repr(send_message))
     closed = []
     for writer in REDIS_SLAVES:
+        logging.info("...to %s", str(writer.get_extra_info("peername")))
         if not writer.is_closing():
             writer.write(send_message.encode())
             await writer.drain()
         else:
             closed.append(writer)
     for writer in closed:
-        try:
+        if writer in REDIS_SLAVES:
+            logging.info("Removing slave %s", repr(writer))
             REDIS_SLAVES.remove(writer)
-        except ValueError:
-            pass
 
 
 async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
