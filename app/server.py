@@ -48,7 +48,7 @@ async def client_connected_cb(
             await writer.drain()
 
             if is_replica:
-                await init_slave(writer)
+                await init_slave(reader, writer)
 
             if send_replica:
                 await send_write(send_replica)
