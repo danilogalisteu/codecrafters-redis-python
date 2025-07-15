@@ -51,7 +51,7 @@ async def run_server(
 ) -> None:
     is_slave = replicaof is not None
     await setup_redis(dirname, dbfilename, is_slave)
-    
+
     if is_slave:
         master_host, master_port = replicaof.split(" ")
         asyncio.create_task(run_client(master_host, int(master_port), port))

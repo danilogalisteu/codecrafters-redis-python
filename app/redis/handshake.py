@@ -1,5 +1,7 @@
 import asyncio
 
+from .database import read_db
+from .rdb.data import decode_data
 from .resp import REDIS_SEPARATOR, encode_redis
 
 
@@ -41,9 +43,15 @@ async def send_handshake(
     await writer.drain()
 
     data = await reader.read()
-    print(f"Received: {data!r}")
+    print(f"Received: {data.decode()!r}")
 
     recv_message = data.decode().removesuffix(REDIS_SEPARATOR).split(" ")
     assert recv_message[0] == "+FULLRESYNC"
+    master_id, master_offset = recv_message[1], int(recv_message[2])
 
-    return recv_message[1], int(recv_message[2])
+    data = await reader.read()
+    print(f"Received: {data!r}")
+
+    read_db(decode_data(data))
+
+    return master_id, master_offset
