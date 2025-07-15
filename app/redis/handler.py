@@ -52,7 +52,7 @@ def handle_redis(recv_message: str) -> tuple[int, str, bool, str]:
                     [arg.upper() for arg in arguments[2:]],
                 )
                 send_message = encode_redis(res)
-                send_replica = encode_redis(command_line.split(" ")) + REDIS_SEPARATOR
+                send_replica = encode_redis(command_line) + REDIS_SEPARATOR
         case "GET":
             if len(arguments) != 1:
                 send_message = "-ERR wrong number of arguments for 'get' command"
