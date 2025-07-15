@@ -10,6 +10,7 @@ def decode_data(buffer: bytes) -> bytes:
     rdb_length_end = buffer.find(REDIS_SEPARATOR.encode())
     rdb_length = int(buffer[1:rdb_length_end])
     rdb_data_start = rdb_length_end + len(REDIS_SEPARATOR.encode())
+    print(len(buffer), rdb_length_end, rdb_length, rdb_data_start, rdb_data_start + rdb_length)
     if len(buffer) < rdb_data_start + rdb_length:
         return b""
     return buffer[rdb_data_start:]
