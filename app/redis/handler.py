@@ -138,11 +138,6 @@ async def handle_redis(
         case "WAIT":
             if len(arguments) < 2:
                 send_message = "-ERR wrong number of arguments for 'WAIT' command"
-            elif arguments[0].upper() == "GETACK":
-                send_master = (
-                    encode_redis(["REPLCONF", "ACK", str(master_offset)])
-                    + REDIS_SEPARATOR
-                )
             else:
                 exp_slaves = int(arguments[0])
                 timeout_ms = int(arguments[1])
