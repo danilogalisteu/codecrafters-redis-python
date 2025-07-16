@@ -12,6 +12,12 @@ from .redis import (
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
+REDIS_OFFSET = 0
+
+
+async def add_offset(offset: int) -> None:
+    global REDIS_OFFSET
+    REDIS_OFFSET += offset
 
 
 async def client_connected_cb(
@@ -42,8 +48,9 @@ async def client_connected_cb(
                 is_replica,
                 send_replica,
                 _,
-            ) = await handle_redis(recv_message)
+            ) = await handle_redis(recv_message, REDIS_OFFSET)
             recv_message = recv_message[parsed_length:]
+            await add_offset(parsed_length)
 
             if parsed_length == 0:
                 continue
