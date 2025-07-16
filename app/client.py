@@ -38,6 +38,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
         await asyncio.sleep(0)
         logging.info("run_client reader.read %s", str(writer.get_extra_info("peername")))
         recv_message += (await reader.read(100)).decode()
+        logging.info("run_client reader.read done %s", str(writer.get_extra_info("peername")))
 
     logging.info("Close the connection")
     writer.close()
