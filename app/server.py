@@ -25,9 +25,14 @@ async def client_connected_cb(
     recv_message = ""
     while True:
         await asyncio.sleep(0)
-        logging.info("client_connected_cb reader.read %s", str(writer.get_extra_info("peername")))
+        logging.info(
+            "client_connected_cb reader.read %s", str(writer.get_extra_info("peername"))
+        )
         recv_message += (await reader.read(100)).decode()
-        logging.info("client_connected_cb reader.read done %s", str(writer.get_extra_info("peername")))
+        logging.info(
+            "client_connected_cb reader.read done %s",
+            str(writer.get_extra_info("peername")),
+        )
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", str(addr), repr(recv_message))
