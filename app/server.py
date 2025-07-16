@@ -18,6 +18,7 @@ REDIS_OFFSET = 0
 async def add_offset(offset: int) -> None:
     global REDIS_OFFSET
     REDIS_OFFSET += offset
+    logging.info("updated offset %d", REDIS_OFFSET)
 
 
 async def client_connected_cb(
