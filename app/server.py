@@ -56,9 +56,13 @@ async def client_connected_cb(
 
             if is_replica:
                 await init_slave(reader, writer)
+                break
 
             if send_replica:
                 await send_write(send_replica)
+
+    while is_replica:
+        await asyncio.sleep(0)
 
     logging.info("[%s] Closing connection", str(addr))
     writer.close()
