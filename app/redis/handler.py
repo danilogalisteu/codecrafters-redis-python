@@ -141,7 +141,7 @@ async def handle_redis(
             else:
                 exp_slaves = int(arguments[0])
                 timeout_ms = int(arguments[1])
-                num_slaves = await wait_slaves(master_offset, exp_slaves, timeout_ms)
+                num_slaves = await wait_slaves(exp_slaves, timeout_ms)
                 send_message = encode_redis(num_slaves)
         case _:
             logging.info("unhandled command %s", command)
