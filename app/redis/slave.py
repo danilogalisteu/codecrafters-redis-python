@@ -65,7 +65,6 @@ async def send_write(send_message: str) -> None:
 
 async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
     logging.info("Checking offsets %d", REDIS_OFFSET)
-    await add_offset(len(encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR))
     tasks = [
         asyncio.create_task(get_offset(reader, writer))
         for reader, writer in REDIS_SLAVES
@@ -75,4 +74,8 @@ async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
         t.cancel()
     slave_offsets = [t.result() for t in done]
     logging.info("Slave offsets %s", repr(slave_offsets))
-    return len([1 for o in slave_offsets if o == REDIS_OFFSET])
+    updated_slaves = len([1 for o in slave_offsets if o == REDIS_OFFSET])
+
+    send_message = encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR
+    await add_offset(len(send_message))
+    return updated_slaves
