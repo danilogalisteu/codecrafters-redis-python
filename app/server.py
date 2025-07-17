@@ -22,13 +22,13 @@ async def client_connected_cb(
     logging.info("[%s] New connection", str(addr))
 
     is_replica = False
-    recv_message = ""
+    recv_message = b""
     while True:
         await asyncio.sleep(0)
         logging.info(
             "client_connected_cb reader.read %s", str(writer.get_extra_info("peername"))
         )
-        recv_message += (await reader.read(100)).decode()
+        recv_message += await reader.read(100)
         logging.info(
             "client_connected_cb reader.read done %s",
             str(writer.get_extra_info("peername")),
@@ -51,7 +51,7 @@ async def client_connected_cb(
                 break
 
             logging.info("[%s] Send %s", str(addr), repr(send_message))
-            writer.write(send_message.encode())
+            writer.write(send_message)
             await writer.drain()
 
             if is_replica:

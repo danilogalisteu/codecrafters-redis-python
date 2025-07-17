@@ -10,9 +10,9 @@ def decode_data(buffer: bytes) -> tuple[bytes, int]:
     if chr(buffer[0]) != IDAggregate.BSTRING:
         return b"", 0
 
-    rdb_length_end = buffer.find(REDIS_SEPARATOR.encode())
+    rdb_length_end = buffer.find(REDIS_SEPARATOR)
     rdb_length = int(buffer[1:rdb_length_end])
-    rdb_data_start = rdb_length_end + len(REDIS_SEPARATOR.encode())
+    rdb_data_start = rdb_length_end + len(REDIS_SEPARATOR)
     if len(buffer) < rdb_data_start + rdb_length:
         return b"", 0
     return buffer[
@@ -23,4 +23,4 @@ def decode_data(buffer: bytes) -> tuple[bytes, int]:
 def encode_data(data: bytes) -> bytes:
     if len(data) == 0:
         return (IDAggregate.BSTRING + "-1").encode()
-    return (IDAggregate.BSTRING + str(len(data)) + REDIS_SEPARATOR).encode() + data
+    return (IDAggregate.BSTRING + str(len(data))).encode() + REDIS_SEPARATOR + data

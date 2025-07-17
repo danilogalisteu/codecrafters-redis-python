@@ -28,7 +28,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
 
                 if send_master:
                     logging.info("Master send %s", repr(send_master))
-                    writer.write(send_master.encode())
+                    writer.write(send_master)
                     await writer.drain()
 
                 if (parsed_length == 0) or (send_message == REDIS_QUIT):
@@ -41,7 +41,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
         logging.info(
             "run_client reader.read %s", str(writer.get_extra_info("peername"))
         )
-        recv_message += (await reader.read(100)).decode()
+        recv_message += await reader.read(100)
         logging.info(
             "run_client reader.read done %s", str(writer.get_extra_info("peername"))
         )

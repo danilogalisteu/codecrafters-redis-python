@@ -26,15 +26,15 @@ async def init_slave(
 
 async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> int:
     send_message = encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR
-    writer.write(send_message.encode())
+    writer.write(send_message)
     await writer.drain()
 
-    recv_message = ""
+    recv_message = b""
     while True:
         logging.info(
             "get_offset reader.read %s", str(writer.get_extra_info("peername"))
         )
-        recv_message += (await reader.read(100)).decode()
+        recv_message += await reader.read(100)
         logging.info(
             "get_offset reader.read done %s", str(writer.get_extra_info("peername"))
         )
@@ -47,14 +47,14 @@ async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter)
     return int(command_line[2])
 
 
-async def send_write(send_message: str) -> None:
+async def send_write(send_message: bytes) -> None:
     logging.info("Replicating message %d %s...", len(send_message), repr(send_message))
     await add_offset(len(send_message))
     closed = []
     for reader, writer in REDIS_SLAVES:
         logging.info("...to %s", str(writer.get_extra_info("peername")))
         if not writer.is_closing():
-            writer.write(send_message.encode())
+            writer.write(send_message)
             await writer.drain()
         else:
             closed.append((reader, writer))
