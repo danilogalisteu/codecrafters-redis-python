@@ -20,7 +20,8 @@ async def send_handshake(
     data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     recv_message, pos = decode_redis(data.decode())
-    assert recv_message == "+PONG"
+    assert pos > 0, data
+    assert recv_message == "+PONG", recv_message
     data = data[pos:]
 
     message = (
