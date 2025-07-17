@@ -48,7 +48,7 @@ async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter)
 
 
 async def send_write(send_message: str) -> None:
-    logging.info("Replicating message %s...", repr(send_message))
+    logging.info("Replicating message %d %s...", len(send_message), repr(send_message))
     await add_offset(len(send_message))
     closed = []
     for reader, writer in REDIS_SLAVES:
