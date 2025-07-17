@@ -149,7 +149,7 @@ def decode_redis(message: bytes, message_counter: int = 0) -> tuple[Any, int]:
             raise ValueError("unknown redis ID", recv_id)
 
 
-def encode_simple(value: Any, is_error=False) -> bytes:
+def encode_simple(value: Any, is_error: bool = False) -> bytes:
     if isinstance(value, str):
         return ((IDSimple.ERROR if is_error else IDSimple.STRING) + value).encode()
     if isinstance(value, int):
@@ -170,7 +170,11 @@ def encode_redis(value: Any) -> bytes:
     if isinstance(value, str):
         if len(value) == 0:
             return (IDAggregate.BSTRING + "-1").encode()
-        return (IDAggregate.BSTRING + str(len(value))).encode() + REDIS_SEPARATOR + value.encode()
+        return (
+            (IDAggregate.BSTRING + str(len(value))).encode()
+            + REDIS_SEPARATOR
+            + value.encode()
+        )
     if isinstance(value, list):
         header = (IDAggregate.ARRAY + str(len(value))).encode()
         data = [encode_redis(array_value) for array_value in value]

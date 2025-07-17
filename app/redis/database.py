@@ -3,6 +3,7 @@ from pathlib import Path
 from time import time_ns
 
 from .rdb import read_rdb, write_rdb
+from .resp import encode_simple
 
 REDIS_DB_NUM = 0
 REDIS_DB_DATA = {REDIS_DB_NUM: {}}
@@ -54,14 +55,14 @@ def save_db(dirname: str, dbfilename: str) -> None:
     db_fn.write_bytes(write_db())
 
 
-def set_value(key: str, value: str, options: list[str]) -> str:
+def set_value(key: str, value: str, options: list[str]) -> bytes:
     set_time = get_current_time()
     exp = None
     for opt in options:
         if opt in ["EX", "EXAT", "PX", "PXAT"]:
             idx = options.index(opt)
             if idx + 1 >= len(options):
-                return "-ERR missing arguments for 'set' command"
+                return encode_simple("ERR missing arguments for 'set' command", True)
             exp = int(options[idx + 1])
             if opt.startswith("EX"):
                 exp *= 1000
@@ -71,7 +72,7 @@ def set_value(key: str, value: str, options: list[str]) -> str:
 
     logging.info("SET time %d key %s value %s exp %s", set_time, key, value, exp)
     REDIS_DB_DATA[REDIS_DB_NUM][key] = {"value": value, "exp": exp}
-    return "OK"
+    return encode_simple("OK")
 
 
 def write_db() -> bytes:

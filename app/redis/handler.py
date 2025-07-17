@@ -3,7 +3,7 @@ import logging
 from .config import get_config, set_config
 from .database import get_keys, get_value, save_db, set_value
 from .info import get_info, get_info_str, isin_info
-from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
+from .resp import REDIS_SEPARATOR, decode_redis, encode_redis, encode_simple
 from .slave import wait_slaves
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
@@ -47,40 +47,58 @@ async def handle_redis(
                 if len(arguments) == 1:
                     send_message = encode_redis(arguments[0])
                 else:
-                    send_message = b"-ERR wrong number of arguments for 'ping' command"
+                    send_message = encode_simple(
+                        "ERR wrong number of arguments for 'ping' command", True
+                    )
             else:
-                send_message = b"+PONG"
+                send_message = encode_simple("PONG")
         case "ECHO":
             if len(arguments) == 1:
                 send_message = encode_redis(arguments[0])
             else:
-                send_message = b"-ERR wrong number of arguments for 'echo' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'echo' command", True
+                )
         case "SET":
             if len(arguments) < 2:
-                send_message = b"-ERR wrong number of arguments for 'set' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'set' command", True
+                )
             else:
                 res = set_value(
                     arguments[0],
                     arguments[1],
                     [arg.upper() for arg in arguments[2:]],
                 )
-                send_message = encode_redis(res)
+                send_message = res
                 send_replica = encode_redis(command_line) + REDIS_SEPARATOR
         case "GET":
             if len(arguments) != 1:
-                send_message = b"-ERR wrong number of arguments for 'get' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'get' command", True
+                )
+            else:
+                res = get_value(arguments[0])
+                send_message = encode_redis(res)
+        case "TYPE":
+            if len(arguments) != 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'TYPE' command", True
+                )
             else:
                 res = get_value(arguments[0])
                 send_message = encode_redis(res)
         case "CONFIG":
             if len(arguments) < 1:
-                send_message = b"-ERR missing arguments for 'CONFIG' command"
+                send_message = encode_simple(
+                    "ERR missing arguments for 'CONFIG' command", True
+                )
             else:
                 option = arguments[0].upper()
                 if option == "GET":
                     if len(arguments) < 2:
-                        send_message = (
-                            b"-ERR missing parameters for 'CONFIG GET' command"
+                        send_message = encode_simple(
+                            "ERR missing parameters for 'CONFIG GET' command", True
                         )
                     else:
                         name = arguments[1]
@@ -88,11 +106,13 @@ async def handle_redis(
                         if value is not None:
                             send_message = encode_redis([name, value])
                         else:
-                            send_message = b"-ERR unknown 'CONFIG' parameter"
+                            send_message = encode_simple(
+                                "ERR unknown 'CONFIG' parameter", True
+                            )
                 elif option == "SET":
                     if len(arguments) < 3:
-                        send_message = (
-                            b"-ERR missing parameters for 'CONFIG SET' command"
+                        send_message = encode_simple(
+                            "ERR missing parameters for 'CONFIG SET' command", True
                         )
                     else:
                         name = arguments[1]
@@ -100,13 +120,15 @@ async def handle_redis(
                         set_config(name, value)
                         send_message = encode_redis("OK")
                 else:
-                    send_message = b"-ERR unhandled 'CONFIG' option"
+                    send_message = encode_simple("ERR unhandled 'CONFIG' option", True)
         case "SAVE":
             save_db(get_config("dir"), get_config("dbfilename"))
             send_message = encode_redis("OK")
         case "KEYS":
             if len(arguments) != 1:
-                send_message = b"-ERR wrong number of arguments for 'KEYS' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'KEYS' command", True
+                )
             else:
                 res = get_keys(arguments[0])
                 send_message = encode_redis(res)
@@ -118,26 +140,32 @@ async def handle_redis(
                     "\n\n".join([get_info_str(section) for section in arguments])
                 )
             else:
-                send_message = b"-ERR unknown section for 'INFO' command"
+                send_message = encode_simple(
+                    "ERR unknown section for 'INFO' command", True
+                )
         case "REPLCONF":
             if len(arguments) < 1:
-                send_message = b"-ERR wrong number of arguments for 'REPLCONF' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'REPLCONF' command", True
+                )
             elif arguments[0].upper() == "GETACK":
                 send_master = (
                     encode_redis(["REPLCONF", "ACK", str(master_offset)])
                     + REDIS_SEPARATOR
                 )
             else:
-                send_message = b"+OK"
+                send_message = encode_simple("OK")
         case "PSYNC":
             repl_id = get_info("replication", "master_replid")
             if repl_id == "":
-                send_message = b"-ERR not master"
-            send_message = f"+FULLRESYNC {repl_id} 0".encode()
+                send_message = encode_simple("ERR not master", True)
+            send_message = encode_simple(f"FULLRESYNC {repl_id} 0")
             is_replica = True
         case "WAIT":
             if len(arguments) < 2:
-                send_message = b"-ERR wrong number of arguments for 'WAIT' command"
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'WAIT' command", True
+                )
             else:
                 exp_slaves = int(arguments[0])
                 timeout_ms = int(arguments[1])
