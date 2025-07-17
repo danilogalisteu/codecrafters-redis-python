@@ -45,6 +45,8 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
         logging.info(
             "run_client reader.read done %s", str(writer.get_extra_info("peername"))
         )
+        if recv_message == b"":
+            break
 
     logging.info("Close the connection")
     writer.close()

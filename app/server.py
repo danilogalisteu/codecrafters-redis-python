@@ -33,6 +33,8 @@ async def client_connected_cb(
             "client_connected_cb reader.read done %s",
             str(writer.get_extra_info("peername")),
         )
+        if recv_message == b"":
+            break
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", str(addr), repr(recv_message))
