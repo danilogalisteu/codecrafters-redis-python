@@ -149,12 +149,9 @@ def decode_redis(message: bytes, message_counter: int = 0) -> tuple[Any, int]:
             raise ValueError("unknown redis ID", recv_id)
 
 
-def encode_redis(value: Any) -> bytes:
-    logging.debug("new encode %s", str(value))
+def encode_simple(value: Any, is_error=False) -> bytes:
     if isinstance(value, str):
-        if len(value) == 0:
-            return (IDAggregate.BSTRING + "-1").encode()
-        return (IDAggregate.BSTRING + str(len(value))).encode() + REDIS_SEPARATOR + value.encode()
+        return ((IDSimple.ERROR if is_error else IDSimple.STRING) + value).encode()
     if isinstance(value, int):
         return (IDSimple.INTEGER + str(value)).encode()
     if value is None:
@@ -165,6 +162,15 @@ def encode_redis(value: Any) -> bytes:
         return (IDSimple.DOUBLE + str(value)).encode()
     if isinstance(value, Decimal):
         return (IDSimple.BIGNUM + str(value)).encode()
+    raise ValueError("unhandled redis encoding type", type(value))
+
+
+def encode_redis(value: Any) -> bytes:
+    logging.debug("new encode %s", str(value))
+    if isinstance(value, str):
+        if len(value) == 0:
+            return (IDAggregate.BSTRING + "-1").encode()
+        return (IDAggregate.BSTRING + str(len(value))).encode() + REDIS_SEPARATOR + value.encode()
     if isinstance(value, list):
         header = (IDAggregate.ARRAY + str(len(value))).encode()
         data = [encode_redis(array_value) for array_value in value]
@@ -173,4 +179,4 @@ def encode_redis(value: Any) -> bytes:
         header = (IDAggregate.MAP + str(len(value))).encode()
         data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
         return REDIS_SEPARATOR.join([header, *data])
-    raise ValueError("unhandled redis encoding type", type(value))
+    return encode_simple(value)
