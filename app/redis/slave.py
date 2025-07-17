@@ -65,6 +65,9 @@ async def send_write(send_message: str) -> None:
 
 async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
     logging.info("Checking offsets %d", REDIS_OFFSET)
+    if REDIS_OFFSET == 0:
+        return len(REDIS_SLAVES)
+
     tasks = [
         asyncio.create_task(get_offset(reader, writer))
         for reader, writer in REDIS_SLAVES
