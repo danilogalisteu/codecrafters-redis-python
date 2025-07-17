@@ -87,8 +87,10 @@ async def handle_redis(
                 )
             else:
                 res = get_value(arguments[0])
-                if isinstance(res, str):
-                    encode_simple("string")
+                if res == "":
+                    send_message = encode_simple("none")
+                elif isinstance(res, str):
+                    send_message = encode_simple("string")
                 else:
                     send_message = encode_simple("none")
         case "CONFIG":
