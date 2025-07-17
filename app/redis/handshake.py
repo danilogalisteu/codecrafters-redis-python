@@ -21,7 +21,7 @@ async def send_handshake(
     logging.info("Received %s", repr(data.decode()))
     recv_message, pos = decode_redis(data.decode())
     assert pos > 0, data
-    assert recv_message == "+PONG", recv_message
+    assert recv_message == "PONG", recv_message
     data = data[pos:]
 
     message = (
@@ -34,7 +34,8 @@ async def send_handshake(
     data += await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     recv_message, pos = decode_redis(data.decode())
-    assert recv_message == "+OK"
+    assert pos > 0, data
+    assert recv_message == "OK", recv_message
     data = data[pos:]
 
     message = encode_redis(["REPLCONF", "capa", "psync2"]) + REDIS_SEPARATOR
@@ -45,7 +46,8 @@ async def send_handshake(
     data += await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
     recv_message, pos = decode_redis(data.decode())
-    assert recv_message == "+OK"
+    assert pos > 0, data
+    assert recv_message == "OK", recv_message
     data = data[pos:]
 
     message = encode_redis(["PSYNC", "?", "-1"]) + REDIS_SEPARATOR
@@ -54,14 +56,13 @@ async def send_handshake(
     await writer.drain()
 
     data += await reader.read(100)
-    recv_sep = data.find(REDIS_SEPARATOR.encode())
-    recv_message = data[: recv_sep + len(REDIS_SEPARATOR.encode())].decode()
-    logging.info("Received %s", repr(recv_message))
-
-    recv_message = recv_message.removesuffix(REDIS_SEPARATOR).split(" ")
-    assert recv_message[0] == "+FULLRESYNC"
+    logging.info("Received %s", repr(data.decode()))
+    recv_message, pos = decode_redis(data.decode())
+    assert pos > 0, data
+    assert len(recv_message) == 3, recv_message
+    assert recv_message[0] == "FULLRESYNC", recv_message
+    data = data[pos:]
     master_id, master_offset = recv_message[1], int(recv_message[2])
-    data = data[recv_sep + len(REDIS_SEPARATOR.encode()) :]
 
     data += await reader.read(100)
     logging.info("Received %d %s", len(data), repr(data))
