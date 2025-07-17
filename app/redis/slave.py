@@ -69,7 +69,9 @@ async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
         asyncio.create_task(get_offset(reader, writer))
         for reader, writer in REDIS_SLAVES
     ]
-    done, _ = await asyncio.wait(tasks, timeout=float(timeout_ms) / 1000)
+    done, pending = await asyncio.wait(tasks, timeout=float(timeout_ms) / 1000)
+    for t in pending:
+        t.cancel()
     slave_offsets = [t.result() for t in done]
     logging.info("Slave offsets %s", repr(slave_offsets))
     return len([1 for o in slave_offsets if o == REDIS_OFFSET])
