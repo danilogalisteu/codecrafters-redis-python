@@ -3,7 +3,7 @@ import logging
 
 from .database import read_db
 from .rdb.data import decode_data
-from .resp import REDIS_SEPARATOR, encode_redis
+from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
 
 
 async def send_handshake(
@@ -19,7 +19,9 @@ async def send_handshake(
     )
     data = await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
-    assert data.decode().removesuffix(REDIS_SEPARATOR) == "+PONG"
+    recv_message, pos = decode_redis(data.decode())
+    assert recv_message == "+PONG"
+    data = data[pos:]
 
     message = (
         encode_redis(["REPLCONF", "listening-port", str(slave_port)]) + REDIS_SEPARATOR
@@ -30,7 +32,9 @@ async def send_handshake(
 
     data += await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
-    assert data.decode().removesuffix(REDIS_SEPARATOR) == "+OK"
+    recv_message, pos = decode_redis(data.decode())
+    assert recv_message == "+OK"
+    data = data[pos:]
 
     message = encode_redis(["REPLCONF", "capa", "psync2"]) + REDIS_SEPARATOR
     logging.info("Sending %s", repr(message))
@@ -39,7 +43,9 @@ async def send_handshake(
 
     data += await reader.read(100)
     logging.info("Received %s", repr(data.decode()))
-    assert data.decode().removesuffix(REDIS_SEPARATOR) == "+OK"
+    recv_message, pos = decode_redis(data.decode())
+    assert recv_message == "+OK"
+    data = data[pos:]
 
     message = encode_redis(["PSYNC", "?", "-1"]) + REDIS_SEPARATOR
     logging.info("Sending %s", repr(message))
@@ -48,14 +54,14 @@ async def send_handshake(
 
     data += await reader.read(100)
     recv_sep = data.find(REDIS_SEPARATOR.encode())
-    recv_message = data[: recv_sep + len(REDIS_SEPARATOR.encode())]
-    logging.info("Received %s", repr(recv_message.decode()))
+    recv_message = data[: recv_sep + len(REDIS_SEPARATOR.encode())].decode()
+    logging.info("Received %s", repr(recv_message))
 
-    recv_message = recv_message.decode().removesuffix(REDIS_SEPARATOR).split(" ")
+    recv_message = recv_message.removesuffix(REDIS_SEPARATOR).split(" ")
     assert recv_message[0] == "+FULLRESYNC"
     master_id, master_offset = recv_message[1], int(recv_message[2])
-
     data = data[recv_sep + len(REDIS_SEPARATOR.encode()) :]
+
     data += await reader.read(100)
     logging.info("Received %d %s", len(data), repr(data))
 
