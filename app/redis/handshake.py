@@ -14,9 +14,6 @@ async def send_handshake(
     writer.write(message)
     await writer.drain()
 
-    logging.info(
-        "send_handshake reader.read %s", str(writer.get_extra_info("peername"))
-    )
     data = await reader.read(100)
     logging.info("Received %s", repr(data))
     recv_message, pos = decode_redis(data)
