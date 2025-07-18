@@ -94,6 +94,7 @@ def set_value(key: str, value: str, options: list[str]) -> bytes:
 
 def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
     set_time = get_current_time()
+    logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
 
     if kid == "*":
         millisecondsTime = get_current_time()
@@ -118,7 +119,6 @@ def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
     else:
         return encode_simple("ERR invalid id format", True)
 
-    logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         REDIS_DB_VAL[REDIS_DB_NUM][key] = {
             "value": {millisecondsTime: {sequenceNumber: values}},
@@ -141,6 +141,8 @@ def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
             sequenceNumber = latestSeq + 1
         elif sequenceNumber <= latestSeq:
             return encode_simple(error_id, True)
+    elif sequenceNumber == -1:
+        sequenceNumber = 0
 
     if millisecondsTime not in REDIS_DB_VAL[REDIS_DB_NUM][key]["value"]:
         REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime] = {}
