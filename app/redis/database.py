@@ -102,11 +102,19 @@ def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
         millisecondsTime, sequenceNumber = kid.split("-", maxsplit=1)
         millisecondsTime = int(millisecondsTime)
         if sequenceNumber == "*":
-            sequenceNumber = -1 if key in REDIS_DB_VAL[REDIS_DB_NUM] else 0
+            sequenceNumber = (
+                -1
+                if key in REDIS_DB_VAL[REDIS_DB_NUM]
+                else 1
+                if millisecondsTime == 0
+                else 0
+            )
         else:
             sequenceNumber = int(sequenceNumber)
             if (millisecondsTime == 0) and (sequenceNumber == 0):
-                return encode_simple("ERR The ID specified in XADD must be greater than 0-0", True)
+                return encode_simple(
+                    "ERR The ID specified in XADD must be greater than 0-0", True
+                )
     else:
         return encode_simple("ERR invalid id format", True)
 
@@ -126,7 +134,9 @@ def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
         return encode_simple(error_id, True)
 
     if millisecondsTime == latestTime:
-        latestSeq = max(REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime].keys())
+        latestSeq = max(
+            REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime].keys()
+        )
         if sequenceNumber == -1:
             sequenceNumber = latestSeq + 1
         elif sequenceNumber <= latestSeq:
