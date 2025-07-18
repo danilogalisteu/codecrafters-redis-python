@@ -103,7 +103,7 @@ async def handle_redis(
                 key = arguments[0]
                 kid = arguments[1]
                 values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
-                send_message = encode_redis(set_value_stream(key, kid, values))
+                send_message = set_value_stream(key, kid, values)
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:

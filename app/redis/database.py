@@ -4,7 +4,7 @@ from time import time_ns
 
 from .rdb import read_rdb, write_rdb
 from .rdb.file.constants import DBType
-from .resp import encode_simple
+from .resp import encode_redis, encode_simple
 
 REDIS_DB_NUM = 0
 REDIS_DB_VAL: dict[int, dict[str, dict[str, str | dict[str, str]]]] = {REDIS_DB_NUM: {}}
@@ -92,19 +92,52 @@ def set_value(key: str, value: str, options: list[str]) -> bytes:
     return encode_simple("OK")
 
 
-def set_value_stream(key: str, kid: str, values: dict[str, str]) -> str:
+def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
     set_time = get_current_time()
+
+    if kid == "*":
+        millisecondsTime = get_current_time()
+        sequenceNumber = 0
+    elif "-" in kid:
+        millisecondsTime, sequenceNumber = kid.split("-", maxsplit=1)
+        millisecondsTime = int(millisecondsTime)
+        if sequenceNumber == "*":
+            sequenceNumber = -1 if key in REDIS_DB_VAL[REDIS_DB_NUM] else 0
+        else:
+            sequenceNumber = int(sequenceNumber)
+            if (millisecondsTime == 0) and (sequenceNumber == 0):
+                return encode_simple("ERR The ID specified in XADD must be greater than 0-0", True)
+    else:
+        return encode_simple("ERR invalid id format", True)
 
     logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         REDIS_DB_VAL[REDIS_DB_NUM][key] = {
-            "value": {kid: values},
+            "value": {millisecondsTime: {sequenceNumber: values}},
             "type": DBType.STREAM,
         }
-    else:
-        REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][kid] = values
+        return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
 
-    return kid
+    latestTime = max(REDIS_DB_VAL[REDIS_DB_NUM][key]["value"].keys())
+
+    error_id = "ERR The ID specified in XADD is equal or smaller than the target stream top item"
+
+    if millisecondsTime < latestTime:
+        return encode_simple(error_id, True)
+
+    if millisecondsTime == latestTime:
+        latestSeq = max(REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime].keys())
+        if sequenceNumber == -1:
+            sequenceNumber = latestSeq + 1
+        elif sequenceNumber <= latestSeq:
+            return encode_simple(error_id, True)
+
+    if millisecondsTime not in REDIS_DB_VAL[REDIS_DB_NUM][key]["value"]:
+        REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime] = {}
+
+    REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime][sequenceNumber] = values
+
+    return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
 
 
 def write_db() -> bytes:
