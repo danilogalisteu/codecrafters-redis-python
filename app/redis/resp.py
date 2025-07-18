@@ -151,17 +151,19 @@ def decode_redis(message: bytes, message_counter: int = 0) -> tuple[Any, int]:
 
 def encode_simple(value: Any, is_error: bool = False) -> bytes:
     if isinstance(value, str):
-        return ((IDSimple.ERROR if is_error else IDSimple.STRING) + value).encode()
+        return (
+            (IDSimple.ERROR if is_error else IDSimple.STRING) + value
+        ).encode() + REDIS_SEPARATOR
     if isinstance(value, int):
-        return (IDSimple.INTEGER + str(value)).encode()
+        return (IDSimple.INTEGER + str(value)).encode() + REDIS_SEPARATOR
     if value is None:
-        return IDSimple.NULL.encode()
+        return IDSimple.NULL.encode() + REDIS_SEPARATOR
     if isinstance(value, bool):
-        return (IDSimple.BOOLEAN + ("t" if value else "f")).encode()
+        return (IDSimple.BOOLEAN + ("t" if value else "f")).encode() + REDIS_SEPARATOR
     if isinstance(value, float):
-        return (IDSimple.DOUBLE + str(value)).encode()
+        return (IDSimple.DOUBLE + str(value)).encode() + REDIS_SEPARATOR
     if isinstance(value, Decimal):
-        return (IDSimple.BIGNUM + str(value)).encode()
+        return (IDSimple.BIGNUM + str(value)).encode() + REDIS_SEPARATOR
     raise ValueError("unhandled redis encoding type", type(value))
 
 
@@ -169,18 +171,19 @@ def encode_redis(value: Any) -> bytes:
     logging.debug("new encode %s", str(value))
     if isinstance(value, str):
         if len(value) == 0:
-            return (IDAggregate.BSTRING + "-1").encode()
+            return (IDAggregate.BSTRING + "-1").encode() + REDIS_SEPARATOR
         return (
             (IDAggregate.BSTRING + str(len(value))).encode()
             + REDIS_SEPARATOR
             + value.encode()
+            + REDIS_SEPARATOR
         )
     if isinstance(value, list):
-        header = (IDAggregate.ARRAY + str(len(value))).encode()
+        header = (IDAggregate.ARRAY + str(len(value))).encode() + REDIS_SEPARATOR
         data = [encode_redis(array_value) for array_value in value]
-        return REDIS_SEPARATOR.join([header, *data])
+        return b"".join([header, *data])
     if isinstance(value, dict):
-        header = (IDAggregate.MAP + str(len(value))).encode()
+        header = (IDAggregate.MAP + str(len(value))).encode() + REDIS_SEPARATOR
         data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
-        return REDIS_SEPARATOR.join([header, *data])
+        return b"".join([header, *data])
     return encode_simple(value)
