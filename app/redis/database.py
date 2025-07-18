@@ -1,4 +1,5 @@
 import logging
+from enum import StrEnum
 from pathlib import Path
 from time import time_ns
 
@@ -10,6 +11,17 @@ REDIS_DB_DATA = {REDIS_DB_NUM: {}}
 REDIS_META = {}
 
 
+class DBValueType(StrEnum):
+    NONE = "none"
+    STR = "string"
+    LIST = "list"
+    SET = "set"
+    ZSET = "zset"
+    HASH = "hash"
+    STREAM = "stream"
+    VSET = "vectorset"
+
+
 def get_current_time() -> int:
     """Current time in ms"""
     return int(time_ns() / 1e6)
@@ -19,6 +31,15 @@ def get_keys(pattern: str) -> list[str]:
     keys = list(REDIS_DB_DATA[REDIS_DB_NUM].keys())
     # TODO filter keys using pattern
     return keys
+
+
+def get_type(key: str) -> str:
+    value = get_value(key)
+    if value == "":
+        return DBValueType.NONE
+    if isinstance(value, str):
+        return DBValueType.STR
+    return DBValueType.NONE
 
 
 def get_value(key: str) -> str:

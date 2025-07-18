@@ -1,7 +1,7 @@
 import logging
 
 from .config import get_config, set_config
-from .database import get_keys, get_value, save_db, set_value
+from .database import get_keys, get_type, get_value, save_db, set_value
 from .info import get_info, get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis, encode_simple
 from .slave import wait_slaves
@@ -86,13 +86,8 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'TYPE' command", True
                 )
             else:
-                res = get_value(arguments[0])
-                if res == "":
-                    send_message = encode_simple("none")
-                elif isinstance(res, str):
-                    send_message = encode_simple("string")
-                else:
-                    send_message = encode_simple("none")
+                vtype = get_type(arguments[0])
+                send_message = encode_simple(vtype)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
