@@ -1,6 +1,6 @@
 import struct
 
-from app.redis.rdb.constants import RDBOpCode
+from .constants import RDBOpCode
 
 
 def read_rdb_checksum(buffer: bytes, pos: int = 0) -> tuple[int, int]:

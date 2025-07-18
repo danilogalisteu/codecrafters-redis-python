@@ -1,6 +1,6 @@
 from collections.abc import Callable
 
-from app.redis.rdb.constants import RDBOpCode
+from .constants import RDBOpCode
 
 # https://github.com/pasztorpisti/py-crc
 # SPDX-License-Identifier: MIT-0

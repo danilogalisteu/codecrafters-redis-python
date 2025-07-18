@@ -1,6 +1,6 @@
-from app.redis.rdb.constants import RDBOpCode
 from app.redis.rdb.length import decode_length, encode_length
 
+from .constants import RDBOpCode
 from .value import read_rdb_value, write_rdb_value
 
 
