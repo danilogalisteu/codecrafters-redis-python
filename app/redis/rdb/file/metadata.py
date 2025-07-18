@@ -3,7 +3,7 @@ from app.redis.rdb.string import decode_string, encode_string
 from .constants import RDBOpCode
 
 
-def read_rdb_meta(buffer: bytes, pos: int = 0) -> tuple[int, dict[str, str]]:
+def read_rdb_meta(buffer: bytes, pos: int = 0) -> tuple[int, dict[str, str | int]]:
     data = {}
     while True:
         if buffer[pos] != RDBOpCode.AUX:
