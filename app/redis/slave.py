@@ -3,7 +3,7 @@ import logging
 
 from .database import write_db
 from .rdb.data import encode_data
-from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
+from .resp import decode_redis, encode_redis
 
 REDIS_OFFSET = 0
 REDIS_SLAVES: set[tuple[asyncio.StreamReader, asyncio.StreamWriter]] = set()
@@ -25,7 +25,7 @@ async def init_slave(
 
 
 async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> int:
-    send_message = encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR
+    send_message = encode_redis(["REPLCONF", "GETACK", "*"])
     writer.write(send_message)
     await writer.drain()
 
@@ -79,6 +79,6 @@ async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
     logging.info("Slave offsets %s", repr(slave_offsets))
     updated_slaves = len([1 for o in slave_offsets if o == REDIS_OFFSET])
 
-    send_message = encode_redis(["REPLCONF", "GETACK", "*"]) + REDIS_SEPARATOR
+    send_message = encode_redis(["REPLCONF", "GETACK", "*"])
     await add_offset(len(send_message))
     return updated_slaves

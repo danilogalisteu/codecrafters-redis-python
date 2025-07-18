@@ -41,7 +41,7 @@ async def handle_redis(
     send_master = b""
     match command:
         case "QUIT":
-            send_message = REDIS_SEPARATOR
+            send_message = REDIS_QUIT
         case "PING":
             if arguments:
                 if len(arguments) == 1:
@@ -71,7 +71,7 @@ async def handle_redis(
                     [arg.upper() for arg in arguments[2:]],
                 )
                 send_message = res
-                send_replica = encode_redis(command_line) + REDIS_SEPARATOR
+                send_replica = encode_redis(command_line)
         case "GET":
             if len(arguments) != 1:
                 send_message = encode_simple(
@@ -149,10 +149,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'REPLCONF' command", True
                 )
             elif arguments[0].upper() == "GETACK":
-                send_master = (
-                    encode_redis(["REPLCONF", "ACK", str(master_offset)])
-                    + REDIS_SEPARATOR
-                )
+                send_master = encode_redis(["REPLCONF", "ACK", str(master_offset)])
             else:
                 send_message = encode_simple("OK")
         case "PSYNC":
@@ -176,7 +173,7 @@ async def handle_redis(
 
     return (
         parsed_length,
-        send_message + REDIS_SEPARATOR,
+        send_message,
         is_replica,
         send_replica,
         send_master,

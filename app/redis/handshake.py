@@ -3,13 +3,13 @@ import logging
 
 from .database import read_db
 from .rdb.data import decode_data
-from .resp import REDIS_SEPARATOR, decode_redis, encode_redis
+from .resp import decode_redis, encode_redis
 
 
 async def send_handshake(
     reader: asyncio.StreamReader, writer: asyncio.StreamWriter, slave_port: int
 ) -> tuple[str, int, bytes]:
-    message = encode_redis(["PING"]) + REDIS_SEPARATOR
+    message = encode_redis(["PING"])
     logging.info("Sending %s", repr(message))
     writer.write(message)
     await writer.drain()
@@ -24,9 +24,7 @@ async def send_handshake(
     assert recv_message == "PONG", recv_message
     data = data[pos:]
 
-    message = (
-        encode_redis(["REPLCONF", "listening-port", str(slave_port)]) + REDIS_SEPARATOR
-    )
+    message = encode_redis(["REPLCONF", "listening-port", str(slave_port)])
     logging.info("Sending %s", repr(message))
     writer.write(message)
     await writer.drain()
@@ -38,7 +36,7 @@ async def send_handshake(
     assert recv_message == "OK", recv_message
     data = data[pos:]
 
-    message = encode_redis(["REPLCONF", "capa", "psync2"]) + REDIS_SEPARATOR
+    message = encode_redis(["REPLCONF", "capa", "psync2"])
     logging.info("Sending %s", repr(message))
     writer.write(message)
     await writer.drain()
@@ -50,7 +48,7 @@ async def send_handshake(
     assert recv_message == "OK", recv_message
     data = data[pos:]
 
-    message = encode_redis(["PSYNC", "?", "-1"]) + REDIS_SEPARATOR
+    message = encode_redis(["PSYNC", "?", "-1"])
     logging.info("Sending %s", repr(message))
     writer.write(message)
     await writer.drain()
