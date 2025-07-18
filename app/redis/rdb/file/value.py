@@ -3,12 +3,12 @@ from typing import Any
 
 from app.redis.rdb.string import decode_string, encode_string
 
-from .constants import RDBOpCode, RDBValue
+from .constants import DBType, RDBOpCode, RDBValue
 
 
 def read_rdb_value(
     buffer: bytes, pos: int = 0
-) -> tuple[int, str, str | int, int | None]:
+) -> tuple[int, str, str | int, str, int | None]:
     vexp = None
     if buffer[pos] == RDBOpCode.EXPIRETIME:
         vexp = struct.unpack("<L", buffer[pos + 1 : pos + 5])[0] * 1000
@@ -26,13 +26,14 @@ def read_rdb_value(
     match vtype:
         case RDBValue.STR:
             sval, vval = decode_string(buffer[pos:])
+            dbtype = DBType.STR
             if skey == 0:
                 raise ValueError("error reading RDB string value")
             pos += sval
         case _:
             raise ValueError(f"unhandled RDB type {vtype} {RDBValue(vtype).name}")
 
-    return pos, str(vkey), vval, vexp
+    return pos, str(vkey), vval, dbtype, vexp
 
 
 def write_rdb_value(key: str, value: Any, exp: int | None) -> bytes:
