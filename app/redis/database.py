@@ -1,25 +1,16 @@
 import logging
-from enum import StrEnum
 from pathlib import Path
 from time import time_ns
 
 from .rdb import read_rdb, write_rdb
+from .rdb.file.constants import DBType
 from .resp import encode_simple
 
+
 REDIS_DB_NUM = 0
-REDIS_DB_DATA = {REDIS_DB_NUM: {}}
-REDIS_META = {}
-
-
-class DBValueType(StrEnum):
-    NONE = "none"
-    STR = "string"
-    LIST = "list"
-    SET = "set"
-    ZSET = "zset"
-    HASH = "hash"
-    STREAM = "stream"
-    VSET = "vectorset"
+REDIS_DB_VAL: dict[int, dict[str, dict[str, str]]] = {REDIS_DB_NUM: {}}
+REDIS_DB_EXP: dict[int, dict[str, int]] = {REDIS_DB_NUM: {}}
+REDIS_META: dict[str, str | int] = {}
 
 
 def get_current_time() -> int:
@@ -28,32 +19,33 @@ def get_current_time() -> int:
 
 
 def get_keys(pattern: str) -> list[str]:
-    keys = list(REDIS_DB_DATA[REDIS_DB_NUM].keys())
+    keys = list(REDIS_DB_VAL[REDIS_DB_NUM].keys())
     # TODO filter keys using pattern
     return keys
 
 
-def get_type(key: str) -> str:
-    value = get_value(key)
-    if value == "":
-        return DBValueType.NONE
-    if isinstance(value, str):
-        return DBValueType.STR
-    return DBValueType.NONE
+def get_type(key: str) -> DBType:
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        return DBType.NONE
+    return DBType(REDIS_DB_VAL[REDIS_DB_NUM][key]["type"])
 
 
 def get_value(key: str) -> str:
-    get_time = get_current_time()
-    data = REDIS_DB_DATA[REDIS_DB_NUM].get(key, {})
-    logging.info("GET time %d key %s data %s", get_time, key, data)
-
-    value = data.get("value", "")
-    exp = data.get("exp", None)
-    if exp is not None and get_time > exp:
-        logging.info("GET expired key %s", key)
-        del REDIS_DB_DATA[REDIS_DB_NUM][key]
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
-    return value
+
+    get_time = get_current_time()
+    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
+    exp = REDIS_DB_EXP[REDIS_DB_NUM].get(key)
+    logging.info("GET key '%s' data %s exp %s time %d", key, data, exp, get_time)
+
+    if exp is not None and get_time > exp:
+        logging.info("GET key '%s' expired", key)
+        del REDIS_DB_VAL[REDIS_DB_NUM][key]
+        del REDIS_DB_EXP[REDIS_DB_NUM][key]
+        return ""
+
+    return data.get("value", "")
 
 
 def load_db(dirname: str, dbfilename: str) -> None:
@@ -63,12 +55,14 @@ def load_db(dirname: str, dbfilename: str) -> None:
 
 
 def read_db(data: bytes) -> None:
-    global REDIS_META, REDIS_DB_DATA
-    REDIS_META, REDIS_DB_DATA = read_rdb(data)
-    if not REDIS_DB_DATA:
-        REDIS_DB_DATA[REDIS_DB_NUM] = {}
+    global REDIS_META, REDIS_DB_VAL
+    REDIS_META, REDIS_DB_VAL, REDIS_DB_EXP = read_rdb(data)
+    if not REDIS_DB_VAL:
+        REDIS_DB_VAL[REDIS_DB_NUM] = {}
+        REDIS_DB_EXP[REDIS_DB_NUM] = {}
     logging.info("updated db meta %s", repr(REDIS_META))
-    logging.info("updated db data %s", repr(REDIS_DB_DATA))
+    logging.info("updated db data %s", repr(REDIS_DB_VAL))
+    logging.info("updated db exp %s", repr(REDIS_DB_EXP))
 
 
 def save_db(dirname: str, dbfilename: str) -> None:
@@ -91,10 +85,13 @@ def set_value(key: str, value: str, options: list[str]) -> bytes:
                 exp += set_time
             break
 
-    logging.info("SET time %d key %s value %s exp %s", set_time, key, value, exp)
-    REDIS_DB_DATA[REDIS_DB_NUM][key] = {"value": value, "exp": exp}
+    logging.info("SET key %s value %s exp %s time %d", key, value, exp, set_time)
+    REDIS_DB_VAL[REDIS_DB_NUM][key] = {"value": value, "type": DBType.STR}
+    if exp is not None:
+        REDIS_DB_EXP[REDIS_DB_NUM][key] = exp
+
     return encode_simple("OK")
 
 
 def write_db() -> bytes:
-    return write_rdb(REDIS_META, REDIS_DB_DATA)
+    return write_rdb(REDIS_META, REDIS_DB_VAL, REDIS_DB_EXP)
