@@ -54,7 +54,7 @@ def load_db(dirname: str, dbfilename: str) -> None:
 
 
 def read_db(data: bytes) -> None:
-    global REDIS_META, REDIS_DB_VAL
+    global REDIS_META, REDIS_DB_VAL, REDIS_DB_EXP
     REDIS_META, REDIS_DB_VAL, REDIS_DB_EXP = read_rdb(data)
     if not REDIS_DB_VAL:
         REDIS_DB_VAL[REDIS_DB_NUM] = {}
