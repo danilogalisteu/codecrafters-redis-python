@@ -6,9 +6,8 @@ from .rdb import read_rdb, write_rdb
 from .rdb.file.constants import DBType
 from .resp import encode_simple
 
-
 REDIS_DB_NUM = 0
-REDIS_DB_VAL: dict[int, dict[str, dict[str, str]]] = {REDIS_DB_NUM: {}}
+REDIS_DB_VAL: dict[int, dict[str, dict[str, str | dict[str, str]]]] = {REDIS_DB_NUM: {}}
 REDIS_DB_EXP: dict[int, dict[str, int]] = {REDIS_DB_NUM: {}}
 REDIS_META: dict[str, str | int] = {}
 
@@ -85,12 +84,27 @@ def set_value(key: str, value: str, options: list[str]) -> bytes:
                 exp += set_time
             break
 
-    logging.info("SET key %s value %s exp %s time %d", key, value, exp, set_time)
+    logging.info("SET key '%s' value %s exp %s time %d", key, value, exp, set_time)
     REDIS_DB_VAL[REDIS_DB_NUM][key] = {"value": value, "type": DBType.STR}
     if exp is not None:
         REDIS_DB_EXP[REDIS_DB_NUM][key] = exp
 
     return encode_simple("OK")
+
+
+def set_value_stream(key: str, kid: str, values: dict[str, str]) -> str:
+    set_time = get_current_time()
+
+    logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        REDIS_DB_VAL[REDIS_DB_NUM][key] = {
+            "value": {kid: values},
+            "type": DBType.STREAM,
+        }
+    else:
+        REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][kid] = values
+
+    return kid
 
 
 def write_db() -> bytes:
