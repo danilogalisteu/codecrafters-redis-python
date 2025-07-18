@@ -1,4 +1,4 @@
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 RDB_NAME = "REDIS"
 RDB_VERSION = "0011"
@@ -25,3 +25,14 @@ class RDBValue(IntEnum):
     ZIPLIST_SORTEDSET = 12
     ZIPLIST_HASH = 13
     QUICKLIST_LIST = 14
+
+
+class DBType(StrEnum):
+    STR = "string"
+    LIST = "list"
+    SET = "set"
+    ZSET = "zset"
+    HASH = "hash"
+    STREAM = "stream"
+    VSET = "vectorset"
+    NONE = "none"
