@@ -1,7 +1,14 @@
 import logging
 
 from .config import get_config, set_config
-from .database import get_keys, get_type, get_value, save_db, set_value
+from .database import (
+    get_keys,
+    get_type,
+    get_value,
+    save_db,
+    set_value,
+    set_value_stream,
+)
 from .info import get_info, get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis, encode_simple
 from .slave import wait_slaves
@@ -65,12 +72,11 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'set' command", True
                 )
             else:
-                res = set_value(
+                send_message = set_value(
                     arguments[0],
                     arguments[1],
                     [arg.upper() for arg in arguments[2:]],
                 )
-                send_message = res
                 send_replica = encode_redis(command_line)
         case "GET":
             if len(arguments) != 1:
@@ -88,6 +94,17 @@ async def handle_redis(
             else:
                 vtype = get_type(arguments[0])
                 send_message = encode_simple(vtype)
+        case "XADD":
+            if (len(arguments) < 2) or (len(arguments) % 2 != 0):
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'XADD' command", True
+                )
+            else:
+                key = arguments[0]
+                kid = arguments[1]
+                values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
+                send_message = encode_redis(set_value_stream(key, kid, values))
+                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
