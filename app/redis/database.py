@@ -68,15 +68,17 @@ async def get_stream_values(
     block_time: int = 0,
 ) -> list[list[str, list[list[str, list[str]]]]]:
     logging.info("XREAD keys %s block_time %d", args, block_time)
-    data = [
-        [key, get_stream_range(key, start, "+", False)] for key, start in args.items()
-    ]
+    data = []
+    for key, start in args.items():
+        values = get_stream_range(key, start, "+", False)
+        if values:
+            data.append([key, values])
     if (block_time > 0) and (len(data) == 0):
         asyncio.sleep(block_time / 1000.0)
-        data = [
-            [key, get_stream_range(key, start, "+", False)]
-            for key, start in args.items()
-        ]
+        for key, start in args.items():
+            values = get_stream_range(key, start, "+", False)
+            if values:
+                data.append([key, values])
     return data
 
 
