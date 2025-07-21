@@ -24,7 +24,9 @@ def get_keys(pattern: str) -> list[str]:
     return keys
 
 
-def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]]]:
+def get_stream_range(
+    key: str, start: str, end: str, left_closed: bool = True
+) -> list[list[str, list[str]]]:
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
 
@@ -50,20 +52,31 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
         [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
         for ktime, kdict in data["value"].items()
         for kseq, kval in kdict.items()
-        if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
+        if (
+            (ktime > startTime)
+            or (
+                (ktime == startTime)
+                and ((kseq >= startSeq) if left_closed else (kseq > startSeq))
+            )
+        )
         and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
     ]
 
 
 async def get_stream_values(
     args: dict[str, str],
-    blockTime: int = 0,
+    block_time: int = 0,
 ) -> list[list[str, list[list[str, list[str]]]]]:
-    logging.info("XREAD keys %s blockTime %d", args, blockTime)
-    data = [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
-    if (blockTime > 0) and (len(data) == 0):
-        asyncio.sleep(blockTime / 1000.)
-        data = [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
+    logging.info("XREAD keys %s block_time %d", args, block_time)
+    data = [
+        [key, get_stream_range(key, start, "+", False)] for key, start in args.items()
+    ]
+    if (block_time > 0) and (len(data) == 0):
+        asyncio.sleep(block_time / 1000.0)
+        data = [
+            [key, get_stream_range(key, start, "+", False)]
+            for key, start in args.items()
+        ]
     return data
 
 

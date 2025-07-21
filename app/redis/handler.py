@@ -120,9 +120,9 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XREAD' command", True
                 )
             else:
-                blockTime = 0
+                block_time = 0
                 if arguments[0].upper() == "BLOCK":
-                    blockTime = int(arguments[1])
+                    block_time = int(arguments[1])
                     arguments = arguments[2:]
 
                 if arguments[0].upper() == "STREAMS":
@@ -136,7 +136,7 @@ async def handle_redis(
                                 strict=True,
                             )
                         )
-                        send_message = encode_redis(await get_stream_values(args, blockTime))
+                        send_message = encode_redis(await get_stream_values(args, block_time))
                     else:
                         send_message = encode_simple("ERR odd number of key/id pairs", True)
                 else:
