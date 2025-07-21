@@ -120,13 +120,13 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XREAD' command", True
                 )
             elif arguments[0].lower() == "streams":
-                pairs = arguments[1:]
-                if len(pairs) % 2 == 0:
-                    middle = int(len(pairs) / 2)
+                arguments = arguments[1:]
+                if len(arguments) % 2 == 0:
+                    middle = int(len(arguments) / 2)
                     args = dict(
                         zip(
-                            pairs[:middle],
-                            pairs[middle:],
+                            arguments[:middle],
+                            arguments[middle:],
                             strict=True,
                         )
                     )
