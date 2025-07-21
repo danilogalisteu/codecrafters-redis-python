@@ -72,7 +72,7 @@ def get_value_stream(key: str, start: str, end: str) -> str:
 
     return encode_redis(
         [
-            [f"{ktime}-{kseq}", [item for kv in kdict.items() for item in kv]]
+            [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
             for ktime, kdict in data["value"].items()
             for kseq, kval in kdict.items()
             if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
