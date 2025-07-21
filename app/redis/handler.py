@@ -122,10 +122,11 @@ async def handle_redis(
             elif arguments[0].lower() == "streams":
                 pairs = arguments[1:]
                 if len(pairs) % 2 == 0:
+                    middle = int(len(pairs) / 2)
                     args = dict(
                         zip(
-                            pairs[: len(pairs) / 2],
-                            pairs[len(pairs) / 2 :],
+                            pairs[:middle],
+                            pairs[middle:],
                             strict=True,
                         )
                     )
