@@ -42,9 +42,8 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
         else (int(end), 2**64 - 1)
     )
 
-    get_time = get_current_time()
     data = REDIS_DB_VAL[REDIS_DB_NUM][key]
-    logging.info("GET key '%s' data %s time %d", key, data, get_time)
+    logging.info("XRANGE key '%s' data %s time %d", key, data)
 
     return [
         [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
@@ -58,6 +57,7 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
 def get_stream_values(
     values: dict[str, str],
 ) -> list[list[str, list[list[str, list[str]]]]]:
+    logging.info("XREAD keys %s", values)
     return [[key, get_stream_range(key, start, "+")] for key, start in values.items()]
 
 
