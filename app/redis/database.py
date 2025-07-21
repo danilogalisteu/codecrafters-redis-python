@@ -23,31 +23,7 @@ def get_keys(pattern: str) -> list[str]:
     return keys
 
 
-def get_type(key: str) -> DBType:
-    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
-        return DBType.NONE
-    return DBType(REDIS_DB_VAL[REDIS_DB_NUM][key]["type"])
-
-
-def get_value(key: str) -> str:
-    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
-        return ""
-
-    get_time = get_current_time()
-    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
-    exp = REDIS_DB_EXP[REDIS_DB_NUM].get(key)
-    logging.info("GET key '%s' data %s exp %s time %d", key, data, exp, get_time)
-
-    if exp is not None and get_time > exp:
-        logging.info("GET key '%s' expired", key)
-        del REDIS_DB_VAL[REDIS_DB_NUM][key]
-        del REDIS_DB_EXP[REDIS_DB_NUM][key]
-        return ""
-
-    return data.get("value", "")
-
-
-def get_value_stream(key: str, start: str, end: str) -> str:
+def get_range_stream(key: str, start: str, end: str) -> str:
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
 
@@ -79,6 +55,30 @@ def get_value_stream(key: str, start: str, end: str) -> str:
             and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
         ]
     )
+
+
+def get_type(key: str) -> DBType:
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        return DBType.NONE
+    return DBType(REDIS_DB_VAL[REDIS_DB_NUM][key]["type"])
+
+
+def get_value(key: str) -> str:
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        return ""
+
+    get_time = get_current_time()
+    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
+    exp = REDIS_DB_EXP[REDIS_DB_NUM].get(key)
+    logging.info("GET key '%s' data %s exp %s time %d", key, data, exp, get_time)
+
+    if exp is not None and get_time > exp:
+        logging.info("GET key '%s' expired", key)
+        del REDIS_DB_VAL[REDIS_DB_NUM][key]
+        del REDIS_DB_EXP[REDIS_DB_NUM][key]
+        return ""
+
+    return data.get("value", "")
 
 
 def load_db(dirname: str, dbfilename: str) -> None:
