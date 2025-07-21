@@ -74,13 +74,15 @@ def get_value_stream(key: str, start: str, end: str) -> str:
     data = REDIS_DB_VAL[REDIS_DB_NUM][key]
     logging.info("GET key '%s' data %s time %d", key, data, get_time)
 
-    return [
-        [f"{ktime}-{kseq}", [item for kv in kdict.items() for item in kv]]
-        for ktime, kdict in data.items()
-        for kseq, kval in kdict.items()
-        if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
-        and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
-    ]
+    return encode_redis(
+        [
+            [f"{ktime}-{kseq}", [item for kv in kdict.items() for item in kv]]
+            for ktime, kdict in data.items()
+            for kseq, kval in kdict.items()
+            if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
+            and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
+        ]
+    )
 
 
 def load_db(dirname: str, dbfilename: str) -> None:
