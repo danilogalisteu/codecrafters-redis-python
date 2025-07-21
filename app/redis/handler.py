@@ -101,10 +101,8 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XADD' command", True
                 )
             else:
-                key = arguments[0]
-                kid = arguments[1]
                 values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
-                send_message = set_value_stream(key, kid, values)
+                send_message = set_value_stream(arguments[0], arguments[1], values)
                 send_replica = encode_redis(command_line)
         case "XRANGE":
             if len(arguments) < 3:
@@ -112,10 +110,9 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XRANGE' command", True
                 )
             else:
-                key = arguments[0]
-                start = arguments[1]
-                end = arguments[2]
-                send_message = get_value_stream(key, start, end)
+                send_message = get_value_stream(
+                    arguments[0], arguments[1], arguments[2]
+                )
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
