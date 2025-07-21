@@ -4,6 +4,7 @@ from .config import get_config, set_config
 from .database import (
     get_keys,
     get_stream_range,
+    get_stream_values,
     get_type,
     get_value,
     save_db,
@@ -110,8 +111,20 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XRANGE' command", True
                 )
             else:
-                send_message = encode_redis(get_stream_range(
-                    arguments[0], arguments[1], arguments[2]
+                send_message = encode_redis(
+                    get_stream_range(arguments[0], arguments[1], arguments[2])
+                )
+        case "XREAD":
+            if len(arguments) < 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'XREAD' command", True
+                )
+            elif arguments[0].lower() == "streams":
+                values = dict(zip(arguments[1::2], arguments[2::2], strict=True))
+                send_message = encode_redis(get_stream_values(values))
+            else:
+                send_message = encode_simple(
+                    f"ERR unhandled option {arguments[0]}", True
                 )
         case "CONFIG":
             if len(arguments) < 1:
