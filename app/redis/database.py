@@ -55,6 +55,12 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
     ]
 
 
+def get_stream_values(
+    values: dict[str, str],
+) -> list[list[str, list[list[str, list[str]]]]]:
+    return [[key, get_stream_range(key, start, "+")] for key, start in values.items()]
+
+
 def get_type(key: str) -> DBType:
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return DBType.NONE
