@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pathlib import Path
 from time import time_ns
@@ -54,11 +55,16 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
     ]
 
 
-def get_stream_values(
+async def get_stream_values(
     args: dict[str, str],
+    blockTime: int = 0,
 ) -> list[list[str, list[list[str, list[str]]]]]:
-    logging.info("XREAD keys %s", args)
-    return [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
+    logging.info("XREAD keys %s blockTime %d", args, blockTime)
+    data = [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
+    if (blockTime > 0) and (len(data) == 0):
+        asyncio.sleep(blockTime / 1000.)
+        data = [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
+    return data
 
 
 def get_type(key: str) -> DBType:

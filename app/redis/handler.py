@@ -119,23 +119,29 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'XREAD' command", True
                 )
-            elif arguments[0].lower() == "streams":
-                arguments = arguments[1:]
-                if len(arguments) % 2 == 0:
-                    middle = int(len(arguments) / 2)
-                    args = dict(
-                        zip(
-                            arguments[:middle],
-                            arguments[middle:],
-                            strict=True,
-                        )
-                    )
-                    send_message = encode_redis(get_stream_values(args))
-                else:
-                    send_message = encode_simple("ERR odd number of key/id pairs", True)
             else:
-                send_message = encode_simple(
-                    f"ERR unhandled option {arguments[0]}", True
+                blockTime = 0
+                if arguments[0].upper() == "BLOCK":
+                    blockTime = int(arguments[1])
+                    arguments = arguments[2:]
+
+                if arguments[0].upper() == "STREAMS":
+                    arguments = arguments[1:]
+                    if len(arguments) % 2 == 0:
+                        middle = int(len(arguments) / 2)
+                        args = dict(
+                            zip(
+                                arguments[:middle],
+                                arguments[middle:],
+                                strict=True,
+                            )
+                        )
+                        send_message = encode_redis(get_stream_values(args, blockTime))
+                    else:
+                        send_message = encode_simple("ERR odd number of key/id pairs", True)
+                else:
+                    send_message = encode_simple(
+                        f"ERR unhandled option {arguments[0]}", True
                 )
         case "CONFIG":
             if len(arguments) < 1:
