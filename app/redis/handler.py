@@ -5,10 +5,10 @@ from .database import (
     get_keys,
     get_type,
     get_value,
-    get_range_stream,
+    get_stream_range,
     save_db,
     set_value,
-    set_value_stream,
+    set_stream_value,
 )
 from .info import get_info, get_info_str, isin_info
 from .resp import REDIS_SEPARATOR, decode_redis, encode_redis, encode_simple
@@ -102,7 +102,7 @@ async def handle_redis(
                 )
             else:
                 values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
-                send_message = set_value_stream(arguments[0], arguments[1], values)
+                send_message = set_stream_value(arguments[0], arguments[1], values)
                 send_replica = encode_redis(command_line)
         case "XRANGE":
             if len(arguments) < 3:
@@ -110,7 +110,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XRANGE' command", True
                 )
             else:
-                send_message = get_range_stream(
+                send_message = get_stream_range(
                     arguments[0], arguments[1], arguments[2]
                 )
                 send_replica = encode_redis(command_line)

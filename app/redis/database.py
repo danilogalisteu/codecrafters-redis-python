@@ -23,7 +23,7 @@ def get_keys(pattern: str) -> list[str]:
     return keys
 
 
-def get_range_stream(key: str, start: str, end: str) -> str:
+def get_stream_range(key: str, start: str, end: str) -> bytes:
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
 
@@ -126,7 +126,7 @@ def set_value(key: str, value: str, options: list[str]) -> bytes:
     return encode_simple("OK")
 
 
-def set_value_stream(key: str, kid: str, values: dict[str, str]) -> bytes:
+def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     set_time = get_current_time()
     logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
 
