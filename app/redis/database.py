@@ -55,10 +55,10 @@ def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]
 
 
 def get_stream_values(
-    values: dict[str, str],
+    args: dict[str, str],
 ) -> list[list[str, list[list[str, list[str]]]]]:
-    logging.info("XREAD keys %s", values)
-    return [[key, get_stream_range(key, start, "+")] for key, start in values.items()]
+    logging.info("XREAD keys %s", args)
+    return [[key, get_stream_range(key, start, "+")] for key, start in args.items()]
 
 
 def get_type(key: str) -> DBType:
