@@ -110,7 +110,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XRANGE' command", True
                 )
             else:
-                send_message = get_stream_range(
+                send_message = encode_redis(get_stream_range(
                     arguments[0], arguments[1], arguments[2]
                 )
         case "CONFIG":

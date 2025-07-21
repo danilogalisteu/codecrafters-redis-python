@@ -23,7 +23,7 @@ def get_keys(pattern: str) -> list[str]:
     return keys
 
 
-def get_stream_range(key: str, start: str, end: str) -> bytes:
+def get_stream_range(key: str, start: str, end: str) -> list[list[str, list[str]]]:
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
 
@@ -46,15 +46,13 @@ def get_stream_range(key: str, start: str, end: str) -> bytes:
     data = REDIS_DB_VAL[REDIS_DB_NUM][key]
     logging.info("GET key '%s' data %s time %d", key, data, get_time)
 
-    return encode_redis(
-        [
-            [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
-            for ktime, kdict in data["value"].items()
-            for kseq, kval in kdict.items()
-            if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
-            and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
-        ]
-    )
+    return [
+        [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
+        for ktime, kdict in data["value"].items()
+        for kseq, kval in kdict.items()
+        if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
+        and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
+    ]
 
 
 def get_type(key: str) -> DBType:
