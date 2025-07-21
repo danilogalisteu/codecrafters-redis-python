@@ -5,6 +5,7 @@ from .database import (
     get_keys,
     get_type,
     get_value,
+    get_value_stream,
     save_db,
     set_value,
     set_value_stream,
@@ -104,6 +105,17 @@ async def handle_redis(
                 kid = arguments[1]
                 values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
                 send_message = set_value_stream(key, kid, values)
+                send_replica = encode_redis(command_line)
+        case "XRANGE":
+            if len(arguments) < 3:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'XRANGE' command", True
+                )
+            else:
+                key = arguments[0]
+                start = arguments[1]
+                end = arguments[2]
+                send_message = get_value_stream(key, start, end)
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
