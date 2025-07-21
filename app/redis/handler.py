@@ -136,7 +136,7 @@ async def handle_redis(
                                 strict=True,
                             )
                         )
-                        send_message = encode_redis(get_stream_values(args, blockTime))
+                        send_message = encode_redis(await get_stream_values(args, blockTime))
                     else:
                         send_message = encode_simple("ERR odd number of key/id pairs", True)
                 else:
