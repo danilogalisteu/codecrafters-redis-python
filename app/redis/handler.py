@@ -124,7 +124,7 @@ async def handle_redis(
                     args = dict(
                         zip(
                             arguments[1 : 1 + len(arguments[1:]) / 2],
-                            arguments[1 + len(arguments) / 2 :],
+                            arguments[1 + len(arguments[1:]) / 2 :],
                             strict=True,
                         )
                     )
