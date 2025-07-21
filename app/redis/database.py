@@ -47,6 +47,42 @@ def get_value(key: str) -> str:
     return data.get("value", "")
 
 
+def get_value_stream(key: str, start: str, end: str) -> str:
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        return ""
+
+    startTime, startSeq = (
+        0,
+        1
+        if start == "-"
+        else map(int, start.split("-", maxsplit=1))
+        if "-" in start
+        else int(start),
+        0,
+    )
+    endTime, endSeq = (
+        2**64 - 1,
+        2**64 - 1
+        if end == "+"
+        else map(int, end.split("-", maxsplit=1))
+        if "-" in end
+        else int(end),
+        2**64 - 1,
+    )
+
+    get_time = get_current_time()
+    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
+    logging.info("GET key '%s' data %s time %d", key, data, get_time)
+
+    return [
+        [f"{ktime}-{kseq}", [item for kv in kdict.items() for item in kv]]
+        for ktime, kdict in data.items()
+        for kseq, kval in kdict.items()
+        if ((ktime > startTime) or ((ktime == startTime) and (kseq >= startSeq)))
+        and ((ktime < endTime) or ((ktime == endTime) and (kseq <= endSeq)))
+    ]
+
+
 def load_db(dirname: str, dbfilename: str) -> None:
     db_fn = Path(dirname) / dbfilename
     if db_fn.is_file():
