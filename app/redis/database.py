@@ -46,7 +46,7 @@ def get_stream_range(
     )
 
     data = REDIS_DB_VAL[REDIS_DB_NUM][key]
-    logging.info("XRANGE key '%s' data %s time %d", key, data)
+    logging.info("XRANGE key '%s' data %s", key, data)
 
     return [
         [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
