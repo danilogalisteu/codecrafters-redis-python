@@ -52,22 +52,18 @@ def get_value_stream(key: str, start: str, end: str) -> str:
         return ""
 
     startTime, startSeq = (
-        0,
-        1
+        (0, 1)
         if start == "-"
         else map(int, start.split("-", maxsplit=1))
         if "-" in start
-        else int(start),
-        0,
+        else (int(start), 0)
     )
     endTime, endSeq = (
-        2**64 - 1,
-        2**64 - 1
+        (2**64 - 1, 2**64 - 1)
         if end == "+"
         else map(int, end.split("-", maxsplit=1))
         if "-" in end
-        else int(end),
-        2**64 - 1,
+        else (int(end), 2**64 - 1)
     )
 
     get_time = get_current_time()
