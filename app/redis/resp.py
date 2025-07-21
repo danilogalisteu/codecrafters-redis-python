@@ -52,6 +52,8 @@ def decode_simple(recv_id: int, value: bytes) -> Any:
 
 def decode_redis(message: bytes, message_counter: int = 0) -> tuple[Any, int]:
     logging.debug("new decode %s %d", repr(message), message_counter)
+    if len(message) < message_counter + 2:
+        return "", message_counter
 
     recv_id = message[message_counter]
 
