@@ -79,7 +79,7 @@ async def get_stream_values(
             values = get_stream_range(key, start, "+", False)
             if values:
                 data.append([key, values])
-    return data
+    return data if len(data) else ""
 
 
 def get_type(key: str) -> DBType:
