@@ -113,7 +113,6 @@ async def handle_redis(
                 send_message = get_stream_range(
                     arguments[0], arguments[1], arguments[2]
                 )
-                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
