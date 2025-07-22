@@ -134,6 +134,22 @@ def get_value(key: str) -> str:
     return data.get("value", "")
 
 
+def increase_value(key: str) -> bytes:
+    logging.info("INCR key '%s'", key)
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        set_value(key, "1")
+        return encode_redis(1)
+
+    value = get_value(key)
+    try:
+        res = int(value) + 1
+    except ValueError:
+        return encode_simple("ERR invalid numerical value")
+
+    set_value(key, str(res))
+    return encode_redis(res)
+
+
 def load_db(dirname: str, dbfilename: str) -> None:
     db_fn = Path(dirname) / dbfilename
     if db_fn.is_file():
