@@ -9,6 +9,7 @@ from .database import (
     get_value,
     increase_value,
     save_db,
+    set_list_value,
     set_stream_value,
     set_value,
 )
@@ -89,6 +90,16 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
             else:
                 send_message = increase_value(arguments[0])
+        case "RPUSH":
+            if len(arguments) != 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'RPUSH' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(set_list_value(arguments[0], arguments[1]))
         case "TYPE":
             if len(arguments) != 1:
                 send_message = encode_simple(
