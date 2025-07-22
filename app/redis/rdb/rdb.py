@@ -14,16 +14,16 @@ def read_rdb(
     dict[int, dict[str, dict[str, str]]],
     dict[int, dict[str, int]],
 ]:
-    logging.warning("%s", repr(buffer))
+    logging.info("%s", repr(buffer))
 
     db_pos, db_version = read_rdb_header(buffer)
-    logging.warning("version %s", repr(db_version))
+    logging.info("version %s", repr(db_version))
     db_pos, db_meta = read_rdb_meta(buffer, db_pos)
-    logging.warning("meta %s", repr(db_meta))
+    logging.info("meta %s", repr(db_meta))
 
     db_data = {}
     db_dexp = {}
-    logging.warning("data %s", repr(buffer[db_pos:]))
+    logging.info("data %s", repr(buffer[db_pos:]))
     while True:
         db_pos, db_num, db_num_data, db_num_exp = read_rdb_data(buffer, db_pos)
         if db_num is None:
@@ -33,9 +33,10 @@ def read_rdb(
 
     db_calc = crc64_redis(buffer[:db_pos])
     db_pos, db_check = read_rdb_checksum(buffer, db_pos)
-    logging.warning("checksum %d %d", db_check, db_calc)
+    logging.info("checksum %d %d", db_check, db_calc)
 
-    logging.warning("%s", repr(db_data))
+    logging.info("%s", repr(db_data))
+    logging.info("%s", repr(db_dexp))
     return db_meta, db_data, db_dexp
 
 

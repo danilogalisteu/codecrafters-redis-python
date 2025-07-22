@@ -37,7 +37,7 @@ async def client_connected_cb(
             command_line, parsed_length = decode_redis(recv_message)
             if parsed_length == 0:
                 continue
-            logging.info(
+            logging.warning(
                 "Command line %s (%d)",
                 str(command_line),
                 parsed_length,
