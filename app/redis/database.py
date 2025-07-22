@@ -31,7 +31,9 @@ def get_stream_last(key: str) -> str:
     data = REDIS_DB_VAL[REDIS_DB_NUM][key]
     last_time = list(data["value"])[-1]
     last_seq = list(data["value"][last_time])[-1]
-    return f"{last_time}-{last_seq}"
+    last_id = f"{last_time}-{last_seq}"
+    logging.info("XRANGE key '%s' $ id %s", key, last_id)
+    return last_id
 
 
 def get_stream_range(
