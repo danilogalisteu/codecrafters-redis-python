@@ -7,6 +7,7 @@ from .database import (
     get_stream_values,
     get_type,
     get_value,
+    increase_value,
     save_db,
     set_stream_value,
     set_value,
@@ -88,6 +89,13 @@ async def handle_redis(
             else:
                 res = get_value(arguments[0])
                 send_message = encode_redis(res)
+        case "INCR":
+            if len(arguments) != 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'INCR' command", True
+                )
+            else:
+                send_message = increase_value(arguments[0])
         case "TYPE":
             if len(arguments) != 1:
                 send_message = encode_simple(
