@@ -75,14 +75,16 @@ async def get_stream_values(
             data.append([key, values])
     if (len(data) > 0) or (block_time is None):
         return data
-    if block_time == 0:
-        return data if len(data) > 0 else ""
 
-    await asyncio.sleep(block_time / 1000.0)
-    for key, start in args.items():
-        values = get_stream_range(key, start, "+", False)
-        if values:
-            data.append([key, values])
+    while len(data) == 0:
+        await asyncio.sleep(block_time / 1000.0)
+        for key, start in args.items():
+            values = get_stream_range(key, start, "+", False)
+            if values:
+                data.append([key, values])
+        if block_time > 0:
+            break
+
     return data if len(data) > 0 else ""
 
 
