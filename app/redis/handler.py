@@ -103,6 +103,13 @@ async def handle_redis(
                 )
             else:
                 send_message = encode_simple(get_type(arguments[0]))
+        case "MULTI":
+            if len(arguments) != 0:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'MULTI' command", True
+                )
+            else:
+                send_message = encode_simple("OK")
         case "XADD":
             if (len(arguments) < 2) or (len(arguments) % 2 != 0):
                 send_message = encode_simple(
