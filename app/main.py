@@ -2,7 +2,7 @@ import argparse
 import asyncio
 import logging
 
-from .server import REDIS_PORT, run_server
+from app.server import REDIS_PORT, run_server
 
 logging.basicConfig(
     format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING

@@ -1,8 +1,8 @@
 import asyncio
 import logging
 
-from .client import run_client
-from .redis import (
+from app.client import run_client
+from app.redis import (
     REDIS_QUIT,
     decode_redis,
     handle_redis,

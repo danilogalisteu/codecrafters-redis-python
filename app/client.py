@@ -1,8 +1,7 @@
 import asyncio
 import logging
 
-from .redis import REDIS_QUIT, decode_redis, handle_redis
-from .redis.handshake import send_handshake
+from app.redis import REDIS_QUIT, decode_redis, handle_redis, send_handshake
 
 
 async def run_client(master_host: str, master_port: int, slave_port: int) -> None:
