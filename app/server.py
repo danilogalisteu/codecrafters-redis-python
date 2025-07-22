@@ -22,6 +22,8 @@ async def client_connected_cb(
     logging.info("[%s] New connection", str(addr))
 
     is_replica = False
+    multi_state = False
+    multi_commands: list[list[str]] = []
     recv_message = b""
     while True:
         await asyncio.sleep(0)
@@ -37,7 +39,9 @@ async def client_connected_cb(
                 is_replica,
                 send_replica,
                 _,
-            ) = await handle_redis(recv_message)
+                multi_state,
+                multi_commands,
+            ) = await handle_redis(recv_message, 0, multi_state, multi_commands)
             recv_message = recv_message[parsed_length:]
 
             if parsed_length == 0:
