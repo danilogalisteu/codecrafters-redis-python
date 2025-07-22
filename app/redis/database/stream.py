@@ -1,22 +1,25 @@
 import asyncio
 import logging
 
-from app.redis.rdb.file.constants import DBType
 from app.redis.resp import encode_redis, encode_simple
 
-from .data import REDIS_DB_NUM, REDIS_DB_VAL, get_current_time
+from .data import (
+    check_key,
+    get_current_time,
+    get_data,
+    set_stream_data,
+)
 
 
 def get_stream_last(key: str) -> str:
-    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+    logging.info("XRANGE key '%s' $")
+    data, _ = get_data(key)
+    if not data:
         return ""
 
-    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
     last_time = list(data["value"])[-1]
     last_seq = list(data["value"][last_time])[-1]
-    last_id = f"{last_time}-{last_seq}"
-    logging.info("XRANGE key '%s' $ id %s", key, last_id)
-    return last_id
+    return f"{last_time}-{last_seq}"
 
 
 def get_stream_range(
@@ -25,7 +28,8 @@ def get_stream_range(
     logging.info(
         "XRANGE key '%s' start %s end %s left_closed %s", key, start, end, left_closed
     )
-    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+    data, exp = get_data(key)
+    if not data:
         return ""
 
     startTime, startSeq = (
@@ -42,9 +46,6 @@ def get_stream_range(
         if "-" in end
         else (int(end), 2**64 - 1)
     )
-
-    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
-    logging.info("XRANGE key '%s' data %s", key, data)
 
     return [
         [f"{ktime}-{kseq}", [item for kv in kval.items() for item in kv]]
@@ -94,8 +95,7 @@ async def get_stream_values(
 
 
 def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
-    set_time = get_current_time()
-    logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
+    logging.info("XADD key '%s' id '%s' values %s", key, kid, values)
 
     if kid == "*":
         millisecondsTime = get_current_time()
@@ -104,13 +104,7 @@ def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
         millisecondsTime, sequenceNumber = kid.split("-", maxsplit=1)
         millisecondsTime = int(millisecondsTime)
         if sequenceNumber == "*":
-            sequenceNumber = (
-                -1
-                if key in REDIS_DB_VAL[REDIS_DB_NUM]
-                else 1
-                if millisecondsTime == 0
-                else 0
-            )
+            sequenceNumber = -1 if check_key(key) else 1 if millisecondsTime == 0 else 0
         else:
             sequenceNumber = int(sequenceNumber)
             if (millisecondsTime == 0) and (sequenceNumber == 0):
@@ -120,24 +114,19 @@ def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     else:
         return encode_simple("ERR invalid id format", True)
 
-    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
-        REDIS_DB_VAL[REDIS_DB_NUM][key] = {
-            "value": {millisecondsTime: {sequenceNumber: values}},
-            "type": DBType.STREAM,
-        }
+    if not check_key(key):
+        set_stream_data(key, millisecondsTime, sequenceNumber, values)
         return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
 
-    latestTime = max(REDIS_DB_VAL[REDIS_DB_NUM][key]["value"].keys())
+    data, _ = get_data(key)
+    latestTime = max(data["value"].keys())
 
     error_id = "ERR The ID specified in XADD is equal or smaller than the target stream top item"
-
     if millisecondsTime < latestTime:
         return encode_simple(error_id, True)
 
     if millisecondsTime == latestTime:
-        latestSeq = max(
-            REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime].keys()
-        )
+        latestSeq = max(data["value"][millisecondsTime].keys())
         if sequenceNumber == -1:
             sequenceNumber = latestSeq + 1
         elif sequenceNumber <= latestSeq:
@@ -145,9 +134,5 @@ def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     elif sequenceNumber == -1:
         sequenceNumber = 0
 
-    if millisecondsTime not in REDIS_DB_VAL[REDIS_DB_NUM][key]["value"]:
-        REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime] = {}
-
-    REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime][sequenceNumber] = values
-
+    set_stream_data(key, millisecondsTime, sequenceNumber, values)
     return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
