@@ -79,6 +79,10 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'set' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
             else:
                 send_message = set_value(
                     arguments[0],
@@ -91,6 +95,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'get' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 res = get_value(arguments[0])
                 send_message = encode_redis(res)
@@ -99,6 +106,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'INCR' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 send_message = increase_value(arguments[0])
         case "TYPE":
@@ -106,6 +116,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'TYPE' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 send_message = encode_simple(get_type(arguments[0]))
         case "MULTI":
@@ -113,6 +126,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'MULTI' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 multi_state = True
                 multi_commands = []
@@ -123,6 +139,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'EXEC' command", True
                 )
             elif multi_state:
+                # TODO run transaction
                 multi_state = False
                 multi_commands = []
                 send_message = encode_redis([])
@@ -133,6 +150,10 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'XADD' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
             else:
                 values = dict(zip(arguments[2::2], arguments[3::2], strict=True))
                 send_message = set_stream_value(arguments[0], arguments[1], values)
@@ -142,6 +163,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'XRANGE' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 send_message = encode_redis(
                     get_stream_range(arguments[0], arguments[1], arguments[2])
@@ -151,6 +175,9 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'XREAD' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 block_time = None
                 if arguments[0].upper() == "BLOCK":
@@ -213,13 +240,20 @@ async def handle_redis(
                 else:
                     send_message = encode_simple("ERR unhandled 'CONFIG' option", True)
         case "SAVE":
-            save_db(get_config("dir"), get_config("dbfilename"))
-            send_message = encode_redis("OK")
+            if multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                save_db(get_config("dir"), get_config("dbfilename"))
+                send_message = encode_redis("OK")
         case "KEYS":
             if len(arguments) != 1:
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'KEYS' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 res = get_keys(arguments[0])
                 send_message = encode_redis(res)
@@ -239,21 +273,31 @@ async def handle_redis(
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'REPLCONF' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             elif arguments[0].upper() == "GETACK":
                 send_master = encode_redis(["REPLCONF", "ACK", str(master_offset)])
             else:
                 send_message = encode_simple("OK")
         case "PSYNC":
-            repl_id = get_info("replication", "master_replid")
-            if repl_id == "":
-                send_message = encode_simple("ERR not master", True)
-            send_message = encode_simple(f"FULLRESYNC {repl_id} 0")
-            is_replica = True
+            if multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                repl_id = get_info("replication", "master_replid")
+                if repl_id == "":
+                    send_message = encode_simple("ERR not master", True)
+                send_message = encode_simple(f"FULLRESYNC {repl_id} 0")
+                is_replica = True
         case "WAIT":
             if len(arguments) < 2:
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'WAIT' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
             else:
                 exp_slaves = int(arguments[0])
                 timeout_ms = int(arguments[1])
