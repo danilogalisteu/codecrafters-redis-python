@@ -136,13 +136,17 @@ async def handle_redis(
                                 strict=True,
                             )
                         )
-                        send_message = encode_redis(await get_stream_values(args, block_time))
+                        send_message = encode_redis(
+                            await get_stream_values(args, block_time)
+                        )
                     else:
-                        send_message = encode_simple("ERR odd number of key/id pairs", True)
+                        send_message = encode_simple(
+                            "ERR odd number of key/id pairs", True
+                        )
                 else:
                     send_message = encode_simple(
                         f"ERR unhandled option {arguments[0]}", True
-                )
+                    )
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
