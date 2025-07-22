@@ -144,7 +144,7 @@ def increase_value(key: str) -> bytes:
     try:
         res = int(value) + 1
     except ValueError:
-        return encode_simple("ERR invalid numerical value")
+        return encode_simple("ERR value is not an integer or out of range")
 
     set_value(key, str(res))
     return encode_redis(res)
