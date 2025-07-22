@@ -65,7 +65,7 @@ def get_stream_range(
 
 async def get_stream_values(
     args: dict[str, str],
-    block_time: int = 0,
+    block_time: int | None = None,
 ) -> list[list[str, list[list[str, list[str]]]]]:
     logging.info("XREAD keys %s block_time %d", args, block_time)
     data = []
@@ -73,13 +73,17 @@ async def get_stream_values(
         values = get_stream_range(key, start, "+", False)
         if values:
             data.append([key, values])
-    if (block_time > 0) and (len(data) == 0):
-        await asyncio.sleep(block_time / 1000.0)
-        for key, start in args.items():
-            values = get_stream_range(key, start, "+", False)
-            if values:
-                data.append([key, values])
-    return data if len(data) else ""
+    if (len(data) > 0) or (block_time is None):
+        return data
+    if block_time == 0:
+        return data if len(data) > 0 else ""
+
+    await asyncio.sleep(block_time / 1000.0)
+    for key, start in args.items():
+        values = get_stream_range(key, start, "+", False)
+        if values:
+            data.append([key, values])
+    return data if len(data) > 0 else ""
 
 
 def get_type(key: str) -> DBType:

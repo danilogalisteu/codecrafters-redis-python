@@ -120,7 +120,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'XREAD' command", True
                 )
             else:
-                block_time = 0
+                block_time = None
                 if arguments[0].upper() == "BLOCK":
                     block_time = int(arguments[1])
                     arguments = arguments[2:]
