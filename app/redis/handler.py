@@ -3,13 +3,14 @@ import logging
 from .config import get_config, set_config
 from .database import (
     get_keys,
+    get_list_values,
     get_stream_range,
     get_stream_values,
     get_type,
     get_value,
     increase_value,
-    save_db,
     push_list_value,
+    save_db,
     set_stream_value,
     set_value,
 )
@@ -99,7 +100,29 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                send_message = encode_redis(push_list_value(arguments[0], arguments[1:]))
+                send_message = encode_redis(
+                    push_list_value(arguments[0], arguments[1:])
+                )
+        case "LRANGE":
+            if len(arguments) != 3:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'LRANGE' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                try:
+                    start = int(arguments[1])
+                    end = int(arguments[2])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument for 'LRANGE' command", True
+                    )
+                else:
+                    send_message = encode_redis(
+                        get_list_values(arguments[0], start, end)
+                    )
         case "TYPE":
             if len(arguments) != 1:
                 send_message = encode_simple(
