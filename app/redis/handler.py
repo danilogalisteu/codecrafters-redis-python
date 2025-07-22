@@ -91,7 +91,7 @@ async def handle_redis(
             else:
                 send_message = increase_value(arguments[0])
         case "RPUSH":
-            if len(arguments) != 2:
+            if len(arguments) < 2:
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'RPUSH' command", True
                 )
@@ -99,7 +99,7 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                send_message = encode_redis(push_list_value(arguments[0], arguments[1]))
+                send_message = encode_redis(push_list_value(arguments[0], arguments[1:]))
         case "TYPE":
             if len(arguments) != 1:
                 send_message = encode_simple(
