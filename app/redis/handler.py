@@ -20,8 +20,11 @@ REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
 async def handle_redis(
-    recv_message: bytes, master_offset: int = 0
-) -> tuple[int, bytes, bool, bytes, bytes]:
+    recv_message: bytes,
+    master_offset: int = 0,
+    multi_state: bool = False,
+    multi_commands: list[list[str]] | None = None,
+) -> tuple[int, bytes, bool, bytes, bytes, bool, list[list[str]]]:
     command_line, parsed_length = decode_redis(recv_message)
     logging.debug(
         "buffer %d %d %s",
@@ -40,6 +43,8 @@ async def handle_redis(
             False,
             b"",
             b"",
+            multi_state,
+            multi_commands,
         )
 
     command = command_line[0].upper()
@@ -109,12 +114,18 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'MULTI' command", True
                 )
             else:
+                multi_state = True
+                multi_commands = []
                 send_message = encode_simple("OK")
         case "EXEC":
             if len(arguments) != 0:
                 send_message = encode_simple(
                     "ERR wrong number of arguments for 'EXEC' command", True
                 )
+            elif multi_state:
+                multi_state = False
+                multi_commands = []
+                send_message = encode_redis([])
             else:
                 send_message = encode_simple("ERR EXEC without MULTI", True)
         case "XADD":
@@ -257,4 +268,6 @@ async def handle_redis(
         is_replica,
         send_replica,
         send_master,
+        multi_state,
+        multi_commands,
     )
