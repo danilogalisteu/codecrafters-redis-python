@@ -102,8 +102,7 @@ async def handle_redis(
                     "ERR wrong number of arguments for 'TYPE' command", True
                 )
             else:
-                vtype = get_type(arguments[0])
-                send_message = encode_simple(vtype)
+                send_message = encode_simple(get_type(arguments[0]))
         case "XADD":
             if (len(arguments) < 2) or (len(arguments) % 2 != 0):
                 send_message = encode_simple(
