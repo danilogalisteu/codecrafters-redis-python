@@ -232,7 +232,10 @@ def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
 
 
-def set_value(key: str, value: str, options: list[str]) -> bytes:
+def set_value(key: str, value: str, options: list[str] | None = None) -> bytes:
+    if options is None:
+        options = []
+
     set_time = get_current_time()
     exp = None
     for opt in options:
