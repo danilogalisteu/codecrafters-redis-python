@@ -111,6 +111,17 @@ async def handle_redis(
                 multi_state = True
                 multi_commands = []
                 send_message = encode_simple("OK")
+        case "DISCARD":
+            if len(arguments) != 0:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'DISCARD' command", True
+                )
+            elif multi_state:
+                multi_state = False
+                multi_commands = None
+                send_message = encode_simple("OK")
+            else:
+                send_message = encode_simple("ERR DISCARD without MULTI", True)
         case "EXEC":
             if len(arguments) != 0:
                 send_message = encode_simple(
@@ -133,7 +144,7 @@ async def handle_redis(
                     send_replicas.append(send_replica_single)
 
                 multi_state = False
-                multi_commands = []
+                multi_commands = None
                 header = (
                     IDAggregate.ARRAY + str(len(send_messages))
                 ).encode() + REDIS_SEPARATOR
