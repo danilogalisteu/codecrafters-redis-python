@@ -4,6 +4,7 @@ import logging
 from .client import run_client
 from .redis import (
     REDIS_QUIT,
+    decode_redis,
     handle_redis,
     init_slave,
     send_write,
@@ -23,7 +24,7 @@ async def client_connected_cb(
 
     is_replica = False
     multi_state = False
-    multi_commands: list[list[str]] = []
+    multi_commands: list[list[str]] | None = None
     recv_message = b""
     while True:
         await asyncio.sleep(0)
@@ -33,19 +34,25 @@ async def client_connected_cb(
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", str(addr), repr(recv_message))
-            (
+            command_line, parsed_length = decode_redis(recv_message)
+            if parsed_length == 0:
+                continue
+            logging.info(
+                "Command line %s (%d)",
+                str(command_line),
                 parsed_length,
+            )
+
+            (
                 send_message,
                 is_replica,
                 send_replica,
                 _,
                 multi_state,
                 multi_commands,
-            ) = await handle_redis(recv_message, 0, multi_state, multi_commands)
+            ) = await handle_redis(command_line, 0, multi_state, multi_commands)
             recv_message = recv_message[parsed_length:]
 
-            if parsed_length == 0:
-                continue
             if send_message == REDIS_QUIT:
                 break
 

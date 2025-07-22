@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from .redis import REDIS_QUIT, handle_redis
+from .redis import REDIS_QUIT, decode_redis, handle_redis
 from .redis.handshake import send_handshake
 
 
@@ -22,8 +22,16 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
             logging.info("Master recv  %s", repr(recv_message))
             send_message = ""
             while len(recv_message) > 0:
-                (
+                command_line, parsed_length = decode_redis(recv_message)
+                if parsed_length == 0:
+                    break
+                logging.info(
+                    "Command line %s (%d)",
+                    str(command_line),
                     parsed_length,
+                )
+
+                (
                     send_message,
                     _,
                     _,
@@ -31,7 +39,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
                     multi_state,
                     multi_commands,
                 ) = await handle_redis(
-                    recv_message, master_offset, multi_state, multi_commands
+                    command_line, master_offset, multi_state, multi_commands
                 )
                 recv_message = recv_message[parsed_length:]
                 master_offset += parsed_length
@@ -41,7 +49,7 @@ async def run_client(master_host: str, master_port: int, slave_port: int) -> Non
                     writer.write(send_master)
                     await writer.drain()
 
-                if (parsed_length == 0) or (send_message == REDIS_QUIT):
+                if send_message == REDIS_QUIT:
                     break
 
             if send_message == REDIS_QUIT:

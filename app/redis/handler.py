@@ -13,40 +13,18 @@ from .database import (
     set_value,
 )
 from .info import get_info, get_info_str, isin_info
-from .resp import REDIS_SEPARATOR, decode_redis, encode_redis, encode_simple
+from .resp import REDIS_SEPARATOR, encode_redis, encode_simple
 from .slave import wait_slaves
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
 
 
 async def handle_redis(
-    recv_message: bytes,
+    command_line: list[str],
     master_offset: int = 0,
     multi_state: bool = False,
     multi_commands: list[list[str]] | None = None,
-) -> tuple[int, bytes, bool, bytes, bytes, bool, list[list[str]]]:
-    command_line, parsed_length = decode_redis(recv_message)
-    logging.debug(
-        "buffer %d %d %s",
-        parsed_length,
-        len(recv_message),
-        recv_message,
-    )
-    logging.info(
-        "Command line %s",
-        str(command_line),
-    )
-    if parsed_length == 0:
-        return (
-            parsed_length,
-            REDIS_SEPARATOR,
-            False,
-            b"",
-            b"",
-            multi_state,
-            multi_commands,
-        )
-
+) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]]]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
@@ -307,7 +285,6 @@ async def handle_redis(
             logging.info("unhandled command %s", command)
 
     return (
-        parsed_length,
         send_message,
         is_replica,
         send_replica,
