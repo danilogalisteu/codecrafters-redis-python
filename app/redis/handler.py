@@ -13,7 +13,7 @@ from .database import (
     set_value,
 )
 from .info import get_info, get_info_str, isin_info
-from .resp import REDIS_SEPARATOR, encode_redis, encode_simple
+from .resp import REDIS_SEPARATOR, IDAggregate, encode_redis, encode_simple
 from .slave import wait_slaves
 
 REDIS_QUIT = REDIS_SEPARATOR + REDIS_SEPARATOR
@@ -118,9 +118,25 @@ async def handle_redis(
                 )
             elif multi_state:
                 # TODO run transaction
+                send_messages = []
+                send_replicas = []
+                for command_line_single in multi_commands:
+                    (
+                        send_message_single,
+                        _,
+                        send_replica_single,
+                        _,
+                    ) = await handle_redis(command_line_single, 0)
+                    send_messages.append(send_message_single)
+                    send_replicas.append(send_replica_single)
+
                 multi_state = False
                 multi_commands = []
-                send_message = encode_redis([])
+                header = (
+                    IDAggregate.ARRAY + str(len(send_messages))
+                ).encode() + REDIS_SEPARATOR
+                send_message = b"".join([header, *send_messages])
+                send_replica = b"".join(send_replicas)
             else:
                 send_message = encode_simple("ERR EXEC without MULTI", True)
         case "XADD":
