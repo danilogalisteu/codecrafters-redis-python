@@ -37,6 +37,9 @@ def get_stream_last(key: str) -> str:
 def get_stream_range(
     key: str, start: str, end: str, left_closed: bool = True
 ) -> list[list[str, list[str]]]:
+    logging.info(
+        "XRANGE key '%s' start %s end %s left_closed %s", key, start, end, left_closed
+    )
     if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
         return ""
 
