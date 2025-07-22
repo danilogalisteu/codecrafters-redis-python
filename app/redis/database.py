@@ -24,6 +24,16 @@ def get_keys(pattern: str) -> list[str]:
     return keys
 
 
+def get_stream_last(key: str) -> str:
+    if key not in REDIS_DB_VAL[REDIS_DB_NUM]:
+        return ""
+
+    data = REDIS_DB_VAL[REDIS_DB_NUM][key]
+    last_time = list(data["value"])[-1]
+    last_seq = list(data["value"][last_time])[-1]
+    return f"{last_time}-{last_seq}"
+
+
 def get_stream_range(
     key: str, start: str, end: str, left_closed: bool = True
 ) -> list[list[str, list[str]]]:
@@ -69,17 +79,24 @@ async def get_stream_values(
 ) -> list[list[str, list[list[str, list[str]]]]]:
     logging.info("XREAD keys %s block_time %d", args, block_time)
     data = []
+    last_id = {}
     for key, start in args.items():
-        values = get_stream_range(key, start, "+", False)
-        if values:
-            data.append([key, values])
+        if start == "$":
+            last_id[key] = get_stream_last(key)
+        else:
+            values = get_stream_range(key, start, "+", False)
+            if values:
+                data.append([key, values])
     if (len(data) > 0) or (block_time is None):
         return data
 
     while len(data) == 0:
         await asyncio.sleep(block_time / 1000.0)
         for key, start in args.items():
-            values = get_stream_range(key, start, "+", False)
+            if start == "$":
+                values = get_stream_range(key, last_id[key], "+", False)
+            else:
+                values = get_stream_range(key, start, "+", False)
             if values:
                 data.append([key, values])
         if block_time > 0:
