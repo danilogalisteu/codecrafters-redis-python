@@ -126,6 +126,8 @@ async def handle_redis(
                         _,
                         send_replica_single,
                         _,
+                        _,
+                        _,
                     ) = await handle_redis(command_line_single, 0)
                     send_messages.append(send_message_single)
                     send_replicas.append(send_replica_single)
