@@ -156,29 +156,6 @@ def save_db(dirname: str, dbfilename: str) -> None:
     db_fn.write_bytes(write_db())
 
 
-def set_value(key: str, value: str, options: list[str]) -> bytes:
-    set_time = get_current_time()
-    exp = None
-    for opt in options:
-        if opt in ["EX", "EXAT", "PX", "PXAT"]:
-            idx = options.index(opt)
-            if idx + 1 >= len(options):
-                return encode_simple("ERR missing arguments for 'set' command", True)
-            exp = int(options[idx + 1])
-            if opt.startswith("EX"):
-                exp *= 1000
-            if not opt.endswith("AT"):
-                exp += set_time
-            break
-
-    logging.info("SET key '%s' value %s exp %s time %d", key, value, exp, set_time)
-    REDIS_DB_VAL[REDIS_DB_NUM][key] = {"value": value, "type": DBType.STR}
-    if exp is not None:
-        REDIS_DB_EXP[REDIS_DB_NUM][key] = exp
-
-    return encode_simple("OK")
-
-
 def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     set_time = get_current_time()
     logging.info("XADD key '%s' id '%s' value %s time %d", key, kid, values, set_time)
@@ -237,6 +214,29 @@ def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
     REDIS_DB_VAL[REDIS_DB_NUM][key]["value"][millisecondsTime][sequenceNumber] = values
 
     return encode_redis(f"{millisecondsTime}-{sequenceNumber}")
+
+
+def set_value(key: str, value: str, options: list[str]) -> bytes:
+    set_time = get_current_time()
+    exp = None
+    for opt in options:
+        if opt in ["EX", "EXAT", "PX", "PXAT"]:
+            idx = options.index(opt)
+            if idx + 1 >= len(options):
+                return encode_simple("ERR missing arguments for 'set' command", True)
+            exp = int(options[idx + 1])
+            if opt.startswith("EX"):
+                exp *= 1000
+            if not opt.endswith("AT"):
+                exp += set_time
+            break
+
+    logging.info("SET key '%s' value %s exp %s time %d", key, value, exp, set_time)
+    REDIS_DB_VAL[REDIS_DB_NUM][key] = {"value": value, "type": DBType.STR}
+    if exp is not None:
+        REDIS_DB_EXP[REDIS_DB_NUM][key] = exp
+
+    return encode_simple("OK")
 
 
 def write_db() -> bytes:
