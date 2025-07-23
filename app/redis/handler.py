@@ -126,7 +126,14 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                send_message = encode_redis(pop_list_value(arguments[0]))
+                try:
+                    count = int(arguments[1])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument for 'LPOP' command", True
+                    )
+                else:
+                    send_message = encode_redis(pop_list_value(arguments[0], count))
         case "LRANGE":
             if len(arguments) != 3:
                 send_message = encode_simple(
