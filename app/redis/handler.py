@@ -103,6 +103,18 @@ async def handle_redis(
                 send_message = encode_redis(
                     push_list_value(arguments[0], arguments[1:])
                 )
+        case "LPUSH":
+            if len(arguments) < 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'LPUSH' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(
+                    push_list_value(arguments[0], arguments[1:], left=True)
+                )
         case "LRANGE":
             if len(arguments) != 3:
                 send_message = encode_simple(
