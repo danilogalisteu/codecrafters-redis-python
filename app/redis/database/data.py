@@ -30,7 +30,7 @@ def get_data(key: str) -> tuple[dict[str, str | dict[str, str]], int | None]:
     logging.debug("get_data key '%s' data %s exp %s time %d", key, data, exp, get_time)
 
     if exp is not None and get_time > exp:
-        logging.warning("GET key '%s' expired exp %s time %d", key, exp, get_time)
+        logging.info("get_data key '%s' expired exp %s time %d", key, exp, get_time)
         del REDIS_DB_VAL[REDIS_DB_NUM][key]
         del REDIS_DB_EXP[REDIS_DB_NUM][key]
         return {}, None
