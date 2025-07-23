@@ -11,7 +11,7 @@ def get_list_values(key: str, start: int, end: int) -> list[str]:
         return []
 
     vlist, _ = get_data(key)
-    return vlist["value"][start : end + 1]
+    return vlist["value"][start : end + 1 if end != -1 else None]
 
 
 def push_list_value(key: str, values: list[str]) -> int:
