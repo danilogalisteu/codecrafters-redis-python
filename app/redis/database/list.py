@@ -23,7 +23,7 @@ def get_list_values(key: str, start: int, end: int) -> list[str]:
     return vlist["value"][start : end + 1 if end != -1 else None]
 
 
-def pop_list_value(key: str) -> str:
+def pop_list_value(key: str, count: int = 1) -> str:
     logging.info("LPOP key '%s'", key)
     if not check_key(key):
         return ""
@@ -32,9 +32,9 @@ def pop_list_value(key: str) -> str:
     if not vlist["value"]:
         return ""
 
-    res = vlist["value"].pop(0)
-    set_data(key, vlist["value"])
-    return res
+    res = vlist["value"][:count]
+    set_data(key, vlist["value"][count:])
+    return res if len(res) > 1 else res[0]
 
 
 def push_list_value(key: str, values: list[str], left: bool = False) -> int:
