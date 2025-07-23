@@ -10,6 +10,7 @@ from .database import (
     get_type,
     get_value,
     increase_value,
+    pop_list_value,
     push_list_value,
     save_db,
     set_stream_value,
@@ -116,6 +117,16 @@ async def handle_redis(
                 send_message = encode_redis(
                     push_list_value(arguments[0], arguments[1:], left=True)
                 )
+        case "LPOP":
+            if len(arguments) < 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'LPOP' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(pop_list_value(arguments[0]))
         case "LRANGE":
             if len(arguments) != 3:
                 send_message = encode_simple(
