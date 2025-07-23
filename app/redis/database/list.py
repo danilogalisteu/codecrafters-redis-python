@@ -14,14 +14,17 @@ def get_list_values(key: str, start: int, end: int) -> list[str]:
     return vlist["value"][start : end + 1 if end != -1 else None]
 
 
-def push_list_value(key: str, values: list[str]) -> int:
+def push_list_value(key: str, values: list[str], left: bool = False) -> int:
     logging.info("RPUSH key '%s' values %s", key, values)
     if not check_key(key):
         set_data(key, values, dtype=DBType.LIST)
         return len(values)
 
     vlist, _ = get_data(key)
-    vlist["value"].extend(values)
+    if left:
+        vlist["value"] = values[::-1] + vlist["value"]
+    else:
+        vlist["value"].extend(values)
 
     set_data(key, vlist["value"])
     return len(vlist["value"])
