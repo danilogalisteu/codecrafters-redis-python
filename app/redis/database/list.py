@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from app.redis.rdb.file.constants import DBType
@@ -23,8 +24,25 @@ def get_list_values(key: str, start: int, end: int) -> list[str]:
     return vlist["value"][start : end + 1 if end != -1 else None]
 
 
+async def pop_block_list_value(key: str, block_time: float) -> list[str]:
+    logging.info("BLPOP key '%s' block_time %s", key, block_time)
+
+    vlist, _ = get_data(key)
+    while not vlist or len(vlist["value"]) == 0:
+        await asyncio.sleep(block_time)
+        vlist, _ = get_data(key)
+        if block_time > 0:
+            break
+
+    if len(vlist["value"]) == 0:
+        return ""
+
+    set_data(key, vlist["value"][1:])
+    return [key, vlist["value"][0]]
+
+
 def pop_list_value(key: str, count: int = 1) -> str:
-    logging.info("LPOP key '%s'", key)
+    logging.info("LPOP key '%s' count %d", key, count)
     if not check_key(key):
         return ""
 
