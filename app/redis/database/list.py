@@ -34,7 +34,7 @@ async def pop_block_list_value(key: str, block_time: float) -> list[str]:
         if block_time > 0:
             break
 
-    if len(vlist["value"]) == 0:
+    if not vlist or len(vlist["value"]) == 0:
         return ""
 
     set_data(key, vlist["value"][1:])
