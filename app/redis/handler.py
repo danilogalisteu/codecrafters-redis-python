@@ -3,6 +3,7 @@ import logging
 from .config import get_config, set_config
 from .database import (
     get_keys,
+    get_list_length,
     get_list_values,
     get_stream_range,
     get_stream_values,
@@ -135,6 +136,16 @@ async def handle_redis(
                     send_message = encode_redis(
                         get_list_values(arguments[0], start, end)
                     )
+        case "LLEN":
+            if len(arguments) != 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'LLEN' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(get_list_length(arguments[0]))
         case "TYPE":
             if len(arguments) != 1:
                 send_message = encode_simple(
