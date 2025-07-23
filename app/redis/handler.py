@@ -10,6 +10,7 @@ from .database import (
     get_type,
     get_value,
     increase_value,
+    pop_block_list_value,
     pop_list_value,
     push_list_value,
     save_db,
@@ -134,6 +135,25 @@ async def handle_redis(
                     )
                 else:
                     send_message = encode_redis(pop_list_value(arguments[0], count))
+        case "BLPOP":
+            if len(arguments) < 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'BLPOP' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                try:
+                    block_time = float(arguments[1])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument for 'BLPOP' command", True
+                    )
+                else:
+                    send_message = encode_redis(
+                        await pop_block_list_value(arguments[0], block_time)
+                    )
         case "LRANGE":
             if len(arguments) != 3:
                 send_message = encode_simple(
