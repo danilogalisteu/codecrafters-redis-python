@@ -9,4 +9,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = []
+dev = [
+    "pipenv>=2025.0.4",
+]
