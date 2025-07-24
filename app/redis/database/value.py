@@ -29,7 +29,7 @@ def increase_value(key: str) -> bytes:
 
 
 def set_value(key: str, value: str, options: list[str] | None = None) -> bytes:
-    logging.info("SET key '%s' value %s options %d", key, value, options)
+    logging.info("SET key '%s' value %s options %s", key, value, options)
     if options is None:
         options = []
 
