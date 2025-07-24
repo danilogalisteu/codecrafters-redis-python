@@ -1,0 +1,23 @@
+version = 1
+revision = 2
+requires-python = ">=3.12"
+
+[[package]]
+name = "codecrafters-redis-python"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "curio-compat" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "curio-compat", specifier = ">=1.6.7" }]
+
+[package.metadata.requires-dev]
+dev = []
+
+[[package]]
+name = "curio-compat"
+version = "1.6.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/00/f8/ed21c164130bae39c5e38f27f851bd32bf33b89480c3110258ae17ff3e1f/curio_compat-1.6.7.tar.gz", hash = "sha256:c7d38214aa8cf48dd4d7c1502b96c2343965fd3292f1cd711cb9b6e7b83963b4", size = 237576, upload-time = "2024-07-31T12:46:56.005Z" }
