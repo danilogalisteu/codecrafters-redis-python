@@ -1,11 +1,14 @@
 import argparse
-import asyncio
 import logging
 
-from app.server import REDIS_PORT, run_server
+import curio
+
+from app.manager import run_manager
+
+from .server import REDIS_PORT
 
 logging.basicConfig(
-    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING
+    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.INFO
 )
 
 
@@ -23,7 +26,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    asyncio.run(run_server(args.dir, args.dbfilename, args.port, args.replicaof))
+    curio.run(run_manager(args.dir, args.dbfilename, args.port, args.replicaof))
 
 
 if __name__ == "__main__":

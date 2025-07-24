@@ -1,5 +1,6 @@
-import asyncio
 import logging
+
+import curio
 
 from .database import read_db
 from .rdb.data import decode_data
@@ -7,14 +8,13 @@ from .resp import decode_redis, encode_redis
 
 
 async def send_handshake(
-    reader: asyncio.StreamReader, writer: asyncio.StreamWriter, slave_port: int
+    sock: curio.io.Socket, slave_port: int
 ) -> tuple[str, int, bytes]:
     message = encode_redis(["PING"])
     logging.info("Sending %s", repr(message))
-    writer.write(message)
-    await writer.drain()
+    await sock.sendall(message)
 
-    data = await reader.read(100)
+    data = await sock.recv(100)
     logging.info("Received %s", repr(data))
     recv_message, pos = decode_redis(data)
     assert pos > 0, data
@@ -23,10 +23,9 @@ async def send_handshake(
 
     message = encode_redis(["REPLCONF", "listening-port", str(slave_port)])
     logging.info("Sending %s", repr(message))
-    writer.write(message)
-    await writer.drain()
+    await sock.sendall(message)
 
-    data += await reader.read(100)
+    data += await sock.recv(100)
     logging.info("Received %s", repr(data))
     recv_message, pos = decode_redis(data)
     assert pos > 0, data
@@ -35,10 +34,9 @@ async def send_handshake(
 
     message = encode_redis(["REPLCONF", "capa", "psync2"])
     logging.info("Sending %s", repr(message))
-    writer.write(message)
-    await writer.drain()
+    await sock.sendall(message)
 
-    data += await reader.read(100)
+    data += await sock.recv(100)
     logging.info("Received %s", repr(data))
     recv_message, pos = decode_redis(data)
     assert pos > 0, data
@@ -47,10 +45,9 @@ async def send_handshake(
 
     message = encode_redis(["PSYNC", "?", "-1"])
     logging.info("Sending %s", repr(message))
-    writer.write(message)
-    await writer.drain()
+    await sock.sendall(message)
 
-    data += await reader.read(100)
+    data += await sock.recv(100)
     logging.info("Received %s", repr(data))
     recv_message, pos = decode_redis(data)
     assert pos > 0, data
@@ -60,7 +57,7 @@ async def send_handshake(
     data = data[pos:]
     master_id, master_offset = command[1], int(command[2])
 
-    data += await reader.read(100)
+    data += await sock.recv(100)
     logging.info("Received %d %s", len(data), repr(data))
 
     rdb_data = b""
@@ -69,7 +66,7 @@ async def send_handshake(
         if pos > 0:
             data = data[pos:]
             break
-        data += await reader.read(100)
+        data += await sock.recv(100)
 
     read_db(rdb_data)
 

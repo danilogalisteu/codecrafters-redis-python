@@ -1,60 +1,55 @@
-import asyncio
 import logging
 
-from .database import write_db
-from .rdb.data import encode_data
-from .resp import decode_redis, encode_redis
+import curio
+
+from app.redis.database import write_db
+from app.redis.rdb.data import encode_data
+from app.redis.resp import decode_redis, encode_redis
 
 REDIS_OFFSET = 0
-REDIS_SLAVES: set[tuple[asyncio.StreamReader, asyncio.StreamWriter]] = set()
+REDIS_SLAVES: set[curio.io.Socket] = set()
 
 
 async def add_offset(offset: int) -> None:
     global REDIS_OFFSET
     REDIS_OFFSET += offset
-    logging.info("updated offset %d", REDIS_OFFSET)
+    logging.info("Updated offset %d", REDIS_OFFSET)
 
 
-async def init_slave(
-    reader: asyncio.StreamReader, writer: asyncio.StreamWriter
-) -> None:
-    logging.info("Adding slave %s", str(writer.get_extra_info("peername")))
-    writer.write(encode_data(write_db()))
-    await writer.drain()
-    REDIS_SLAVES.add((reader, writer))
+async def register_slave(sock: curio.io.Socket) -> None:
+    logging.info("Adding slave %s", str(sock.getpeername()))
+    await sock.sendall(encode_data(write_db()))
+    REDIS_SLAVES.add(sock)
 
 
-async def get_offset(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> int:
+async def get_offset(res_queue: curio.Queue, sid: int, sock: curio.io.Socket) -> None:
     send_message = encode_redis(["REPLCONF", "GETACK", "*"])
-    writer.write(send_message)
-    await writer.drain()
+    await sock.sendall(send_message)
 
     recv_message = b""
     while True:
-        recv_message += await reader.read(100)
+        recv_message += await sock.recv(100)
         command_line, parsed_length = decode_redis(recv_message)
         if parsed_length > 0:
             break
 
     assert command_line[0] == "REPLCONF"
     assert command_line[1] == "ACK"
-    return int(command_line[2])
+    await res_queue.put((sid, int(command_line[2])))
 
 
 async def send_write(send_message: bytes) -> None:
     logging.info("Replicating message %d %s...", len(send_message), repr(send_message))
     await add_offset(len(send_message))
     closed = []
-    for reader, writer in REDIS_SLAVES:
-        logging.info("...to %s", str(writer.get_extra_info("peername")))
-        if not writer.is_closing():
-            writer.write(send_message)
-            await writer.drain()
-        else:
-            closed.append((reader, writer))
-    for reader, writer in closed:
-        logging.info("Removing slave %s", repr(writer))
-        REDIS_SLAVES.discard((reader, writer))
+    for sock in REDIS_SLAVES:
+        logging.info("...to %s", str(sock.getpeername()))
+        try:
+            await sock.sendall(send_message)
+        except:
+            closed.append(sock)
+    for sock in closed:
+        REDIS_SLAVES.discard(sock)
 
 
 async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
@@ -62,16 +57,22 @@ async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
     if REDIS_OFFSET == 0:
         return len(REDIS_SLAVES)
 
-    tasks = [
-        asyncio.create_task(get_offset(reader, writer))
-        for reader, writer in REDIS_SLAVES
-    ]
-    done, pending = await asyncio.wait(tasks, timeout=float(timeout_ms) / 1000)
-    for t in pending:
-        t.cancel()
-    slave_offsets = [t.result() for t in done]
-    logging.info("Slave offsets %s", repr(slave_offsets))
-    updated_slaves = len([1 for o in slave_offsets if o == REDIS_OFFSET])
+    res_queue = curio.Queue()
+    slaves = dict(enumerate(REDIS_SLAVES))
+
+    async with (
+        curio.timeout_after(float(timeout_ms) / 1000),
+        curio.TaskGroup(wait=all) as g,
+    ):
+        for sid, sock in slaves.items():
+            await g.spawn(get_offset(res_queue, sid, sock))
+
+    slave_offsets = {}
+    while not res_queue.empty():
+        sid, offset = await res_queue.get()
+        slave_offsets[sid] = offset
+    logging.info("Slave offsets %s", repr(list(slave_offsets.values())))
+    updated_slaves = len([1 for o in slave_offsets.values() if o == REDIS_OFFSET])
 
     send_message = encode_redis(["REPLCONF", "GETACK", "*"])
     await add_offset(len(send_message))

@@ -1,34 +1,25 @@
-import asyncio
 import logging
 
-from app.client import run_client
-from app.redis import (
-    REDIS_QUIT,
-    decode_redis,
-    handle_redis,
-    init_slave,
-    send_write,
-    setup_redis,
-)
+import curio
+
+from app.redis import REDIS_QUIT, decode_redis, register_slave, send_write
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
 
 async def client_connected_cb(
-    reader: asyncio.StreamReader,
-    writer: asyncio.StreamWriter,
+    client: curio.io.Socket, addr: str, cmd_queue: curio.Queue
 ) -> None:
-    addr = writer.get_extra_info("peername")
-    logging.info("[%s] New connection", str(addr))
+    logging.info("[%s] New connection", addr)
 
+    res_queue = curio.Queue()
     is_replica = False
     multi_state = False
     multi_commands: list[list[str]] | None = None
     recv_message = b""
     while True:
-        await asyncio.sleep(0)
-        recv_message += await reader.read(100)
+        recv_message += await client.recv(100)
         if recv_message == b"":
             break
 
@@ -38,11 +29,15 @@ async def client_connected_cb(
             if parsed_length == 0:
                 continue
             logging.info(
-                "Command line %s (%d)",
+                "[%s] Command line %s (%d)",
+                str(addr),
                 str(command_line),
                 parsed_length,
             )
 
+            await cmd_queue.put(
+                (res_queue, command_line, 0, multi_state, multi_commands)
+            )
             (
                 send_message,
                 is_replica,
@@ -50,52 +45,34 @@ async def client_connected_cb(
                 _,
                 multi_state,
                 multi_commands,
-            ) = await handle_redis(command_line, 0, multi_state, multi_commands)
+            ) = await res_queue.get()
+
             recv_message = recv_message[parsed_length:]
 
             if send_message == REDIS_QUIT:
                 break
 
             logging.info("[%s] Send %s", str(addr), repr(send_message))
-            writer.write(send_message)
-            await writer.drain()
+            await client.sendall(send_message)
 
             if is_replica:
-                await init_slave(reader, writer)
+                await register_slave(client)
                 break
 
             if send_replica:
                 await send_write(send_replica)
 
     while is_replica:
-        await asyncio.sleep(0)
+        await curio.sleep(0)
 
-    logging.info("[%s] Closing connection", str(addr))
-    writer.close()
-    await writer.wait_closed()
+    logging.info("[%s] Connection closed", addr)
 
 
-async def run_server(
-    dirname: str | None,
-    dbfilename: str | None = None,
-    port: int = REDIS_PORT,
-    replicaof: str | None = None,
-) -> None:
-    is_slave = replicaof is not None
-    await setup_redis(dirname, dbfilename, is_slave)
+async def run_server(cmd_queue: curio.Queue, port: int = REDIS_PORT) -> None:
+    logging.info("Serving on %s:%d", REDIS_HOST, port)
 
-    if is_slave:
-        master_host, master_port = replicaof.split(" ")
-        asyncio.create_task(run_client(master_host, int(master_port), port))
+    async def client_connected_task(client: curio.io.Socket, addr: str) -> None:
+        return await client_connected_cb(client, addr, cmd_queue)
 
-    redis_server = await asyncio.start_server(
-        client_connected_cb,
-        host=REDIS_HOST,
-        port=port,
-    )
-
-    addrs = ", ".join(str(sock.getsockname()) for sock in redis_server.sockets)
-    logging.info("Serving on %s", str(addrs))
-
-    async with redis_server:
-        await redis_server.serve_forever()
+    await cmd_queue.put(None)
+    await curio.tcp_server(REDIS_HOST, port, client_connected_task)
