@@ -4,7 +4,7 @@ import curio
 
 from app.redis import handle_redis, setup_redis
 
-from .replica import run_replica
+from .client import run_client
 from .server import run_server
 
 
@@ -16,7 +16,7 @@ async def run_manager(
 
     cmd_queue = curio.Queue()
     if is_slave:
-        _ = await curio.spawn(run_replica, cmd_queue, replicaof, port)
+        _ = await curio.spawn(run_client, cmd_queue, replicaof, port)
         await cmd_queue.get()
     _ = await curio.spawn(run_server, cmd_queue, port)
     await cmd_queue.get()
