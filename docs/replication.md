@@ -52,7 +52,7 @@ Master_cb1 -> Slave1R : +FULLRESYNC <REPL_ID> 0
 Master_cb1 -> Master : read_db
 Master -> Master_cb1 : <RDB>
 Master_cb1 -> Slave1R : <RDB>
-Master_cb1 -> Master : init_slave
+Master_cb1 -> Master : register_slave
 end
 
 
