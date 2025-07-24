@@ -29,7 +29,7 @@ async def handle_redis(
     master_offset: int = 0,
     multi_state: bool = False,
     multi_commands: list[list[str]] | None = None,
-) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]]]:
+) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]] | None]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
