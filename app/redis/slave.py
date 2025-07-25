@@ -60,12 +60,15 @@ async def wait_slaves(num_slaves: int, timeout_ms: int) -> int:
     res_queue = curio.Queue()
     slaves = dict(enumerate(REDIS_SLAVES))
 
-    async with (
-        curio.timeout_after(float(timeout_ms) / 1000),
-        curio.TaskGroup(wait=all) as g,
-    ):
-        for sid, sock in slaves.items():
-            await g.spawn(get_offset(res_queue, sid, sock))
+    try:
+        async with (
+            curio.timeout_after(float(timeout_ms) / 1000),
+            curio.TaskGroup(wait=all) as g,
+        ):
+            for sid, sock in slaves.items():
+                await g.spawn(get_offset(res_queue, sid, sock))
+    except curio.TaskTimeout:
+        pass
 
     slave_offsets = {}
     while not res_queue.empty():
