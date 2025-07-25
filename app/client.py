@@ -1,10 +1,10 @@
 import logging
 
-from app.redis import REDIS_QUIT, decode_redis, send_handshake
+from app.redis import REDIS_QUIT, decode_redis, handle_redis, send_handshake
 from lib import curio
 
 
-async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) -> None:
+async def run_client(replicaof: str, slave_port: int) -> None:
     master_host, master_port = replicaof.split(" ")
     logging.info("Connecting to master on %s:%s", master_host, master_port)
 
@@ -13,7 +13,6 @@ async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) ->
         master_id, master_offset, recv_message = await send_handshake(sock, slave_port)
         logging.info("Connected to master %s:%s", master_id, master_offset)
 
-        res_queue = curio.Queue()
         master_offset = 0
         multi_state = False
         multi_commands: list[list[str]] = []
@@ -31,15 +30,6 @@ async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) ->
                         parsed_length,
                     )
 
-                    await cmd_queue.put(
-                        (
-                            res_queue,
-                            command_line,
-                            master_offset,
-                            multi_state,
-                            multi_commands,
-                        )
-                    )
                     (
                         send_message,
                         _,
@@ -47,7 +37,9 @@ async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) ->
                         send_master,
                         multi_state,
                         multi_commands,
-                    ) = await res_queue.get()
+                    ) = await handle_redis(
+                        command_line, master_offset, multi_state, multi_commands
+                    )
 
                     recv_message = recv_message[parsed_length:]
                     master_offset += parsed_length

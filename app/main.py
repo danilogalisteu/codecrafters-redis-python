@@ -1,13 +1,12 @@
 import argparse
 import logging
 
-from app.manager import run_manager
 from lib import curio
 
-from .server import REDIS_PORT
+from .server import REDIS_PORT, run_server
 
 logging.basicConfig(
-    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.INFO
+    format="[%(asctime)s|%(levelname)s] %(message)s", level=logging.WARNING
 )
 
 
@@ -25,7 +24,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    curio.run(run_manager(args.dir, args.dbfilename, args.port, args.replicaof))
+    curio.run(run_server(args.dir, args.dbfilename, args.port, args.replicaof))
 
 
 if __name__ == "__main__":

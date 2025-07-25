@@ -1,18 +1,24 @@
 import logging
 
-from app.redis import REDIS_QUIT, decode_redis, register_slave, send_write
+from app.redis import (
+    REDIS_QUIT,
+    decode_redis,
+    handle_redis,
+    register_slave,
+    send_write,
+    setup_redis,
+)
 from lib import curio
+
+from .client import run_client
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379
 
 
-async def client_connected_cb(
-    client: curio.io.Socket, addr: str, cmd_queue: curio.Queue
-) -> None:
+async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     logging.info("[%s] New connection", addr)
 
-    res_queue = curio.Queue()
     is_replica = False
     multi_state = False
     multi_commands: list[list[str]] | None = None
@@ -34,9 +40,6 @@ async def client_connected_cb(
                 parsed_length,
             )
 
-            await cmd_queue.put(
-                (res_queue, command_line, 0, multi_state, multi_commands)
-            )
             (
                 send_message,
                 is_replica,
@@ -44,7 +47,7 @@ async def client_connected_cb(
                 _,
                 multi_state,
                 multi_commands,
-            ) = await res_queue.get()
+            ) = await handle_redis(command_line, 0, multi_state, multi_commands)
 
             recv_message = recv_message[parsed_length:]
 
@@ -67,10 +70,13 @@ async def client_connected_cb(
     logging.info("[%s] Connection closed", addr)
 
 
-async def run_server(cmd_queue: curio.Queue, port: int = REDIS_PORT) -> None:
-    logging.info("Serving on %s:%d", REDIS_HOST, port)
+async def run_server(
+    dbdirname: str, dbfilename: str, port: int = REDIS_PORT, replicaof: str = ""
+) -> None:
+    is_slave = replicaof is not None
+    await setup_redis(dbdirname, dbfilename, is_slave)
+    if is_slave:
+        _ = await curio.spawn(run_client, replicaof, port)
 
-    async def client_connected_task(client: curio.io.Socket, addr: str) -> None:
-        return await client_connected_cb(client, addr, cmd_queue)
-
-    await curio.tcp_server(REDIS_HOST, port, client_connected_task)
+    print("Serving on %s:%d", REDIS_HOST, port)
+    await curio.tcp_server(REDIS_HOST, port, client_connected_cb)
