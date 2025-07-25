@@ -17,9 +17,7 @@ async def run_manager(
     cmd_queue = curio.Queue()
     if is_slave:
         _ = await curio.spawn(run_client, cmd_queue, replicaof, port)
-        await cmd_queue.get()
     _ = await curio.spawn(run_server, cmd_queue, port)
-    await cmd_queue.get()
 
     while True:
         (

@@ -74,5 +74,4 @@ async def run_server(cmd_queue: curio.Queue, port: int = REDIS_PORT) -> None:
     async def client_connected_task(client: curio.io.Socket, addr: str) -> None:
         return await client_connected_cb(client, addr, cmd_queue)
 
-    await cmd_queue.put(None)
     await curio.tcp_server(REDIS_HOST, port, client_connected_task)

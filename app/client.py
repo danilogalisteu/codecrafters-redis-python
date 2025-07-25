@@ -13,7 +13,6 @@ async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) ->
     async with sock:
         master_id, master_offset, recv_message = await send_handshake(sock, slave_port)
         logging.info("Connected to master %s:%s", master_id, master_offset)
-        await cmd_queue.put(None)
 
         res_queue = curio.Queue()
         master_offset = 0
