@@ -78,5 +78,5 @@ async def run_server(
     if is_slave:
         _ = await curio.spawn(run_client, replicaof, port)
 
-    print("Serving on %s:%d", REDIS_HOST, port)
+    print(f"Serving on {REDIS_HOST}:{port}")
     await curio.tcp_server(REDIS_HOST, port, client_connected_cb)
