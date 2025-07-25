@@ -1,5 +1,6 @@
-import asyncio
 import logging
+
+import curio
 
 from app.redis.rdb.file.constants import DBType
 
@@ -29,7 +30,7 @@ async def pop_block_list_value(key: str, block_time: float) -> list[str]:
 
     vlist, _ = get_data(key)
     while not vlist or len(vlist["value"]) == 0:
-        await asyncio.sleep(block_time)
+        await curio.sleep(block_time)
         vlist, _ = get_data(key)
         if block_time > 0:
             break

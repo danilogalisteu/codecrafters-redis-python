@@ -1,5 +1,6 @@
-import asyncio
 import logging
+
+import curio
 
 from app.redis.resp import encode_redis, encode_simple
 
@@ -80,7 +81,7 @@ async def get_stream_values(
         return data
 
     while len(data) == 0:
-        await asyncio.sleep(block_time / 1000.0)
+        await curio.sleep(block_time / 1000.0)
         for key, start in args.items():
             if start == "$":
                 values = get_stream_range(key, last_id[key], "+", False)
