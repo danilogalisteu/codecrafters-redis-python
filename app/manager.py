@@ -1,8 +1,7 @@
 import logging
 
-import curio
-
 from app.redis import handle_redis, setup_redis
+from lib import curio
 
 from .client import run_client
 from .server import run_server

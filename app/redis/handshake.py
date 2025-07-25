@@ -1,6 +1,6 @@
 import logging
 
-import curio
+from lib import curio
 
 from .database import read_db
 from .rdb.data import decode_data

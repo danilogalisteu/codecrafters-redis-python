@@ -1,10 +1,9 @@
 import logging
 
-import curio
-
 from app.redis.database import write_db
 from app.redis.rdb.data import encode_data
 from app.redis.resp import decode_redis, encode_redis
+from lib import curio
 
 REDIS_OFFSET = 0
 REDIS_SLAVES: set[curio.io.Socket] = set()

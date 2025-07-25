@@ -1,8 +1,7 @@
 import logging
 
-import curio
-
 from app.redis.resp import encode_redis, encode_simple
+from lib import curio
 
 from .data import (
     check_key,

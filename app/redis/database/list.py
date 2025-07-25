@@ -1,8 +1,7 @@
 import logging
 
-import curio
-
 from app.redis.rdb.file.constants import DBType
+from lib import curio
 
 from .data import check_key, get_data, set_data
 

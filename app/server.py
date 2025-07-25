@@ -1,8 +1,7 @@
 import logging
 
-import curio
-
 from app.redis import REDIS_QUIT, decode_redis, register_slave, send_write
+from lib import curio
 
 REDIS_HOST = "localhost"
 REDIS_PORT = 6379

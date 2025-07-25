@@ -1,8 +1,7 @@
 import logging
 
-import curio
-
 from app.redis import REDIS_QUIT, decode_redis, send_handshake
+from lib import curio
 
 
 async def run_client(cmd_queue: curio.Queue, replicaof: str, slave_port: int) -> None:

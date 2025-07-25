@@ -1,9 +1,8 @@
 import argparse
 import logging
 
-import curio
-
 from app.manager import run_manager
+from lib import curio
 
 from .server import REDIS_PORT
 
