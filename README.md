@@ -1,4 +1,4 @@
-[![progress-banner](https://backend.codecrafters.io/progress/redis/2771faf0-c0f7-4ca9-8cea-47abae98fadd)](https://app.codecrafters.io/users/codecrafters-bot?r=2qF)
+[![progress-banner](https://backend.codecrafters.io/progress/redis/2771faf0-c0f7-4ca9-8cea-47abae98fadd)](https://app.codecrafters.io/users/danilogalisteu)
 
 This is a starting point for Python solutions to the
 ["Build Your Own Redis" Challenge](https://codecrafters.io/challenges/redis).
