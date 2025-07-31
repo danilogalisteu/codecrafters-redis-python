@@ -77,7 +77,9 @@ async def handle_redis(
         case "QUIT":
             send_message = REDIS_QUIT
         case "PING":
-            if arguments:
+            if sub_mode:
+                send_message = encode_redis(["pong", ""])
+            elif arguments:
                 if len(arguments) == 1:
                     send_message = encode_redis(arguments[0])
                 else:
