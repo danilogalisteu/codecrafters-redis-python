@@ -405,6 +405,16 @@ async def handle_redis(
                 timeout_ms = int(arguments[1])
                 num_slaves = await wait_slaves(exp_slaves, timeout_ms)
                 send_message = encode_redis(num_slaves)
+        case "SUBSCRIBE":
+            if len(arguments) < 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'SUBSCRIBE' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(["subscribe", arguments[0], 1])
         case _:
             logging.info("unhandled command %s", command)
 
