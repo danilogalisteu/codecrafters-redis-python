@@ -477,7 +477,10 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
             else:
                 send_message = encode_redis(get_clients(arguments[0]))
-                send_pub = (arguments[0], encode_redis(" ".join(arguments[1:])))
+                send_pub = (
+                    arguments[0],
+                    encode_redis(["message", arguments[0], " ".join(arguments[1:])]),
+                )
         case _:
             logging.info("unhandled command %s", command)
 
