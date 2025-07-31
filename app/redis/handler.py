@@ -50,7 +50,7 @@ async def handle_redis(
     send_message = b""
     send_replica = b""
     send_master = b""
-    new_channels: set[str] = set()
+    new_channels: set[str] | None = None
     send_pub = None
 
     if sub_mode and command not in [
