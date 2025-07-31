@@ -169,11 +169,15 @@ def encode_simple(value: Any, is_error: bool = False) -> bytes:
     raise ValueError("unhandled redis encoding type", type(value))
 
 
-def encode_redis(value: Any) -> bytes:
+def encode_redis(value: Any, nil: bool = True) -> bytes:
     logging.debug("new encode %s", str(value))
     if isinstance(value, str):
         if len(value) == 0:
-            return (IDAggregate.BSTRING + "-1").encode() + REDIS_SEPARATOR
+            if nil:
+                return (IDAggregate.BSTRING + "-1").encode() + REDIS_SEPARATOR
+            return (
+                (IDAggregate.BSTRING + "0").encode() + REDIS_SEPARATOR + REDIS_SEPARATOR
+            )
         return (
             (IDAggregate.BSTRING + str(len(value))).encode()
             + REDIS_SEPARATOR
@@ -182,10 +186,10 @@ def encode_redis(value: Any) -> bytes:
         )
     if isinstance(value, list):
         header = (IDAggregate.ARRAY + str(len(value))).encode() + REDIS_SEPARATOR
-        data = [encode_redis(array_value) for array_value in value]
+        data = [encode_redis(array_value, nil=nil) for array_value in value]
         return b"".join([header, *data])
     if isinstance(value, dict):
         header = (IDAggregate.MAP + str(len(value))).encode() + REDIS_SEPARATOR
-        data = [encode_redis(k) + encode_redis(v) for k, v in value.items()]
+        data = [encode_redis(k) + encode_redis(v, nil=nil) for k, v in value.items()]
         return b"".join([header, *data])
     return encode_simple(value)

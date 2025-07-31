@@ -78,7 +78,7 @@ async def handle_redis(
             send_message = REDIS_QUIT
         case "PING":
             if sub_mode:
-                send_message = encode_redis(["pong", ""])
+                send_message = encode_redis(["pong", ""], nil=False)
             elif arguments:
                 if len(arguments) == 1:
                     send_message = encode_redis(arguments[0])
@@ -457,7 +457,6 @@ async def handle_redis(
                 if sub_channels is None:
                     sub_mode = True
                     sub_channels = set()
-                send_message = b""
                 sub_channels.add(arguments[0])
                 send_message = encode_redis(
                     ["subscribe", arguments[0], len(sub_channels)]
