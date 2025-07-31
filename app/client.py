@@ -15,7 +15,6 @@ async def run_client(replicaof: str, slave_port: int) -> None:
 
         master_offset = 0
         multi_state = False
-        multi_commands: list[list[str]] = []
         while True:
             if len(recv_message) > 0:
                 logging.info("Master recv  %s", repr(recv_message))
@@ -36,14 +35,14 @@ async def run_client(replicaof: str, slave_port: int) -> None:
                         _,
                         send_master,
                         multi_state,
-                        multi_commands,
+                        _,
+                        _,
                         _,
                         _,
                     ) = await handle_redis(
                         command_line,
                         master_offset,
                         multi_state,
-                        multi_commands,
                     )
 
                     recv_message = recv_message[parsed_length:]
