@@ -22,6 +22,7 @@ REDIS_PORT = 6379
 async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     logging.info("[%s] New connection", addr)
 
+    connected = True
     is_replica = False
     multi_state = False
     multi_commands: list[list[str]] | None = None
@@ -29,10 +30,18 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     subbed_channels: set[str] | None = None
     sub_queue = curio.Queue()
     recv_message = b""
-    while True:
-        recv_message += await client.recv(100)
-        if recv_message == b"":
-            break
+    while connected:
+        try:
+            new_data = await curio.timeout_after(0.01, client.recv, 100)
+            if new_data == b"":
+                connected = False
+            recv_message += new_data
+        except curio.TaskTimeout:
+            pass
+
+        while not sub_queue.empty():
+            logging.info("[%s] Received sub %d", addr, sub_queue.qsize())
+            await client.sendall(await sub_queue.get())
 
         if len(recv_message) > 0:
             logging.info("[%s] Recv %s", addr, recv_message)
