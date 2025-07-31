@@ -4,9 +4,11 @@ from app.redis import (
     REDIS_QUIT,
     decode_redis,
     handle_redis,
+    pub_message,
     register_slave,
     send_write,
     setup_redis,
+    sub_channel,
 )
 from lib import curio
 
@@ -23,7 +25,7 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     multi_state = False
     multi_commands: list[list[str]] | None = None
     sub_mode = False
-    sub_channels: set[str] | None = None
+    subbed_channels: set[str] | None = None
     recv_message = b""
     while True:
         recv_message += await client.recv(100)
@@ -50,20 +52,32 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
                 multi_state,
                 multi_commands,
                 sub_mode,
-                sub_channels,
+                new_channels,
+                send_pub,
             ) = await handle_redis(
                 command_line,
                 0,
                 multi_state,
                 multi_commands,
                 sub_mode,
-                sub_channels,
+                subbed_channels,
             )
 
             recv_message = recv_message[parsed_length:]
 
             if send_message == REDIS_QUIT:
                 break
+
+            if new_channels is not None:
+                if subbed_channels is None:
+                    subbed_channels = set()
+                added_channels = new_channels - subbed_channels
+                for ch in added_channels:
+                    sub_channel(ch, client)
+                subbed_channels.update(added_channels)
+
+            if send_pub is not None:
+                await pub_message(send_pub[0], send_pub[1])
 
             logging.info("[%s] Send %s", str(addr), repr(send_message))
             await client.sendall(send_message)

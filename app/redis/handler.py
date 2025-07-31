@@ -18,6 +18,7 @@ from .database import (
     set_value,
 )
 from .info import get_info, get_info_str, isin_info
+from .pubsub import get_clients
 from .resp import REDIS_SEPARATOR, IDAggregate, encode_redis, encode_simple
 from .slave import wait_slaves
 
@@ -30,7 +31,7 @@ async def handle_redis(
     multi_state: bool = False,
     multi_commands: list[list[str]] | None = None,
     sub_mode: bool = False,
-    sub_channels: set[str] | None = None,
+    subbed_channels: set[str] | None = None,
 ) -> tuple[
     bytes,
     bool,
@@ -40,6 +41,7 @@ async def handle_redis(
     list[list[str]] | None,
     bool,
     set[str] | None,
+    tuple[str, bytes] | None,
 ]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
@@ -48,6 +50,7 @@ async def handle_redis(
     send_message = b""
     send_replica = b""
     send_master = b""
+    send_pub = None
 
     if sub_mode and command not in [
         "SUBSCRIBE",
@@ -70,7 +73,8 @@ async def handle_redis(
             multi_state,
             multi_commands,
             sub_mode,
-            sub_channels,
+            subbed_channels,
+            send_pub,
         )
 
     match command:
@@ -274,6 +278,7 @@ async def handle_redis(
                         _,
                         _,
                         _,
+                        _,
                     ) = await handle_redis(command_line_single, 0)
                     send_messages.append(send_message_single)
                     send_replicas.append(send_replica_single)
@@ -454,13 +459,25 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                if sub_channels is None:
+                if not sub_mode:
                     sub_mode = True
-                    sub_channels = set()
-                sub_channels.add(arguments[0])
-                send_message = encode_redis(
-                    ["subscribe", arguments[0], len(sub_channels)]
+                    subbed_channels = set()
+                for ch in arguments:
+                    subbed_channels.add(ch)
+                    send_message += encode_redis(
+                        ["subscribe", ch, len(subbed_channels)]
+                    )
+        case "PUBLISH":
+            if len(arguments) < 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'PUBLISH' command", True
                 )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                send_message = encode_redis(get_clients(arguments[0]))
+                send_pub = (arguments[0], encode_redis(" ".join(arguments[1:])))
         case _:
             logging.info("unhandled command %s", command)
 
@@ -472,5 +489,6 @@ async def handle_redis(
         multi_state,
         multi_commands,
         sub_mode,
-        sub_channels,
+        subbed_channels,
+        send_pub,
     )
