@@ -29,8 +29,18 @@ async def handle_redis(
     master_offset: int = 0,
     multi_state: bool = False,
     multi_commands: list[list[str]] | None = None,
-    subscriptions: set[str] | None = None,
-) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]] | None, set[str] | None]:
+    sub_mode: bool = False,
+    sub_channels: set[str] | None = None,
+) -> tuple[
+    bytes,
+    bool,
+    bytes,
+    bytes,
+    bool,
+    list[list[str]] | None,
+    bool,
+    set[str] | None,
+]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
@@ -38,6 +48,31 @@ async def handle_redis(
     send_message = b""
     send_replica = b""
     send_master = b""
+
+    if sub_mode and command not in [
+        "SUBSCRIBE",
+        "UNSUBSCRIBE",
+        "PSUBSCRIBE",
+        "PUNSUBSCRIBE",
+        "PING",
+        "QUIT",
+        "RESET",
+    ]:
+        send_message = encode_simple(
+            f"ERR Can't execute '{command}' in subscribe mode; only (P)SUBSCRIBE / (P)UNSUBSCRIBE / PING / QUIT / RESET are allowed",
+            True,
+        )
+        return (
+            send_message,
+            is_replica,
+            send_replica,
+            send_master,
+            multi_state,
+            multi_commands,
+            sub_mode,
+            sub_channels,
+        )
+
     match command:
         case "QUIT":
             send_message = REDIS_QUIT
@@ -416,12 +451,13 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                if subscriptions is None:
-                    subscriptions = set()
+                if sub_channels is None:
+                    sub_mode = True
+                    sub_channels = set()
                 send_message = b""
-                subscriptions.add(arguments[0])
+                sub_channels.add(arguments[0])
                 send_message = encode_redis(
-                    ["subscribe", arguments[0], len(subscriptions)]
+                    ["subscribe", arguments[0], len(sub_channels)]
                 )
         case _:
             logging.info("unhandled command %s", command)
@@ -433,5 +469,6 @@ async def handle_redis(
         send_master,
         multi_state,
         multi_commands,
-        subscriptions,
+        sub_mode,
+        sub_channels,
     )

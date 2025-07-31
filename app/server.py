@@ -22,7 +22,8 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     is_replica = False
     multi_state = False
     multi_commands: list[list[str]] | None = None
-    subscriptions: set[str] | None = None
+    sub_mode = False
+    sub_channels: set[str] | None = None
     recv_message = b""
     while True:
         recv_message += await client.recv(100)
@@ -48,13 +49,15 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
                 _,
                 multi_state,
                 multi_commands,
-                subscriptions,
+                sub_mode,
+                sub_channels,
             ) = await handle_redis(
                 command_line,
                 0,
                 multi_state,
                 multi_commands,
-                subscriptions,
+                sub_mode,
+                sub_channels,
             )
 
             recv_message = recv_message[parsed_length:]
