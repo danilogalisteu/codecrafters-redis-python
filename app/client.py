@@ -37,8 +37,12 @@ async def run_client(replicaof: str, slave_port: int) -> None:
                         send_master,
                         multi_state,
                         multi_commands,
+                        _,
                     ) = await handle_redis(
-                        command_line, master_offset, multi_state, multi_commands
+                        command_line,
+                        master_offset,
+                        multi_state,
+                        multi_commands,
                     )
 
                     recv_message = recv_message[parsed_length:]

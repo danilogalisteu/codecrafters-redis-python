@@ -29,7 +29,8 @@ async def handle_redis(
     master_offset: int = 0,
     multi_state: bool = False,
     multi_commands: list[list[str]] | None = None,
-) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]] | None]:
+    subscriptions: set[str] | None = None,
+) -> tuple[bytes, bool, bytes, bytes, bool, list[list[str]] | None, set[str] | None]:
     command = command_line[0].upper()
     arguments = command_line[1:] if len(command_line) > 1 else []
 
@@ -234,6 +235,7 @@ async def handle_redis(
                         _,
                         _,
                         _,
+                        _,
                     ) = await handle_redis(command_line_single, 0)
                     send_messages.append(send_message_single)
                     send_replicas.append(send_replica_single)
@@ -414,7 +416,13 @@ async def handle_redis(
                 multi_commands.append(command_line)
                 send_message = encode_simple("QUEUED")
             else:
-                send_message = encode_redis(["subscribe", arguments[0], 1])
+                if subscriptions is None:
+                    subscriptions = set()
+                send_message = b""
+                subscriptions.add(arguments[0])
+                send_message = encode_redis(
+                    ["subscribe", arguments[0], len(subscriptions)]
+                )
         case _:
             logging.info("unhandled command %s", command)
 
@@ -425,4 +433,5 @@ async def handle_redis(
         send_master,
         multi_state,
         multi_commands,
+        subscriptions,
     )
