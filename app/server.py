@@ -9,6 +9,7 @@ from app.redis import (
     send_write,
     setup_redis,
     sub_channel,
+    unsub_channel,
 )
 from lib import curio
 
@@ -26,6 +27,7 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
     multi_commands: list[list[str]] | None = None
     sub_mode = False
     subbed_channels: set[str] | None = None
+    sub_queue = curio.Queue()
     recv_message = b""
     while True:
         recv_message += await client.recv(100)
@@ -33,7 +35,7 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
             break
 
         if len(recv_message) > 0:
-            logging.info("[%s] Recv %s", str(addr), repr(recv_message))
+            logging.info("[%s] Recv %s", addr, recv_message)
             command_line, parsed_length = decode_redis(recv_message)
             if parsed_length == 0:
                 continue
@@ -73,13 +75,17 @@ async def client_connected_cb(client: curio.io.Socket, addr: str) -> None:
                     subbed_channels = set()
                 added_channels = new_channels - subbed_channels
                 for ch in added_channels:
-                    sub_channel(ch, client)
-                subbed_channels.update(added_channels)
+                    subbed_channels.add(ch)
+                    await sub_channel(ch, sub_queue)
+                removed_channels = subbed_channels - new_channels
+                for ch in removed_channels:
+                    subbed_channels.discard(ch)
+                    await unsub_channel(ch, sub_queue)
 
             if send_pub is not None:
                 await pub_message(send_pub[0], send_pub[1])
 
-            logging.info("[%s] Send %s", str(addr), repr(send_message))
+            logging.info("[%s] Send %s", addr, send_message)
             await client.sendall(send_message)
 
             if is_replica:
