@@ -38,6 +38,7 @@ async def run_client(replicaof: str, slave_port: int) -> None:
                         multi_state,
                         multi_commands,
                         _,
+                        _,
                     ) = await handle_redis(
                         command_line,
                         master_offset,
