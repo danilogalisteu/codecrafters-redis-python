@@ -55,5 +55,4 @@ def get_set_range(key: str, start: int, end: int) -> list[str]:
     else:
         end += 1
 
-    print(vzset["value"])
-    return [v[0] for v in vzset["value"][start : end]]
+    return [v[0] for v in vzset["value"][start:end]]
