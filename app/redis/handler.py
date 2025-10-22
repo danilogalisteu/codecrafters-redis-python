@@ -17,6 +17,7 @@ from .database import (
     pop_block_list_value,
     pop_list_value,
     push_list_value,
+    remove_set_member,
     save_db,
     set_set_value,
     set_stream_value,
@@ -428,6 +429,18 @@ async def handle_redis(
                 send_replica = encode_redis(command_line)
             else:
                 send_message = encode_redis(get_set_length(arguments[0]))
+                send_replica = encode_redis(command_line)
+        case "ZREM":
+            if len(arguments) != 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'ZREM' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(remove_set_member(arguments[0], arguments[1]))
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
