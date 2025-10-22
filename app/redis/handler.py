@@ -5,23 +5,23 @@ from .database import (
     get_keys,
     get_list_length,
     get_list_values,
-    get_set_length,
-    get_set_range,
-    get_set_rank,
-    get_set_score,
     get_stream_range,
     get_stream_values,
     get_type,
     get_value,
+    get_zset_length,
+    get_zset_range,
+    get_zset_rank,
+    get_zset_score,
     increase_value,
     pop_block_list_value,
     pop_list_value,
     push_list_value,
-    remove_set_member,
+    remove_zset_member,
     save_db,
-    set_set_value,
     set_stream_value,
     set_value,
+    set_zset_value,
 )
 from .info import get_info, get_info_str, isin_info
 from .pubsub import get_clients
@@ -373,7 +373,7 @@ async def handle_redis(
                 values = dict(
                     zip(arguments[2::2], map(float, arguments[1::2]), strict=True)
                 )
-                send_message = encode_redis(set_set_value(arguments[0], values))
+                send_message = encode_redis(set_zset_value(arguments[0], values))
                 send_replica = encode_redis(command_line)
         case "ZRANK":
             if len(arguments) != 2:
@@ -385,7 +385,7 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(get_set_rank(arguments[0], arguments[1]))
+                send_message = encode_redis(get_zset_rank(arguments[0], arguments[1]))
                 send_replica = encode_redis(command_line)
         case "ZRANGE":
             if len(arguments) < 3:
@@ -404,7 +404,7 @@ async def handle_redis(
                         "ERR invalid argument for 'ZRANGE' command", True
                     )
                 send_message = encode_redis(
-                    get_set_range(arguments[0], start, end), nil=False
+                    get_zset_range(arguments[0], start, end), nil=False
                 )
         case "ZSCORE":
             if len(arguments) != 2:
@@ -416,7 +416,7 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(get_set_score(arguments[0], arguments[1]))
+                send_message = encode_redis(get_zset_score(arguments[0], arguments[1]))
                 send_replica = encode_redis(command_line)
         case "ZCARD":
             if len(arguments) != 1:
@@ -428,7 +428,7 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(get_set_length(arguments[0]))
+                send_message = encode_redis(get_zset_length(arguments[0]))
                 send_replica = encode_redis(command_line)
         case "ZREM":
             if len(arguments) != 2:
@@ -440,7 +440,9 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(remove_set_member(arguments[0], arguments[1]))
+                send_message = encode_redis(
+                    remove_zset_member(arguments[0], arguments[1])
+                )
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:

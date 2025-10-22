@@ -5,7 +5,7 @@ from app.redis.rdb.file.constants import DBType
 from .data import check_key, get_data, set_data
 
 
-def set_set_value(key: str, values: dict[str, float]) -> int:
+def set_zset_value(key: str, values: dict[str, float]) -> int:
     logging.info("ZADD key '%s' values %s", key, values)
     if not check_key(key):
         sorted_values = sorted(
@@ -25,7 +25,7 @@ def set_set_value(key: str, values: dict[str, float]) -> int:
     return len(sorted_values) - len(vzset["value"])
 
 
-def get_set_rank(key: str, member: str) -> int | str:
+def get_zset_rank(key: str, member: str) -> int | str:
     logging.info("ZRANK key '%s' member %s", key, member)
     if not check_key(key):
         return ""
@@ -38,7 +38,7 @@ def get_set_rank(key: str, member: str) -> int | str:
     return list(vdict).index(member)
 
 
-def get_set_range(key: str, start: int, end: int) -> list[str]:
+def get_zset_range(key: str, start: int, end: int) -> list[str]:
     logging.info("ZRANGE key '%s' start %d end %d", key, start, end)
     if not check_key(key):
         return []
@@ -58,7 +58,7 @@ def get_set_range(key: str, start: int, end: int) -> list[str]:
     return [v[0] for v in vzset["value"][start:end]]
 
 
-def get_set_length(key: str) -> int:
+def get_zset_length(key: str) -> int:
     logging.info("ZCARD key '%s'", key)
     if not check_key(key):
         return 0
@@ -67,7 +67,7 @@ def get_set_length(key: str) -> int:
     return len(vzset["value"])
 
 
-def get_set_score(key: str, member: str) -> str:
+def get_zset_score(key: str, member: str) -> str:
     logging.info("ZSCORE key '%s' member %s", key, member)
     if not check_key(key):
         return ""
@@ -80,7 +80,7 @@ def get_set_score(key: str, member: str) -> str:
     return str(vdict[member])
 
 
-def remove_set_member(key: str, member: str) -> int:
+def remove_zset_member(key: str, member: str) -> int:
     logging.info("ZREM key '%s' member %s", key, member)
     if not check_key(key):
         return 0
