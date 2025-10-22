@@ -186,13 +186,19 @@ def encode_redis(value: Any, nil: bool = True) -> bytes:
         )
     if isinstance(value, list):
         if len(value) == 0:
-            return (IDAggregate.ARRAY + "-1").encode() + REDIS_SEPARATOR
+            if nil:
+                return (IDAggregate.ARRAY + "-1").encode() + REDIS_SEPARATOR
+            return (
+                (IDAggregate.ARRAY + "0").encode() + REDIS_SEPARATOR + REDIS_SEPARATOR
+            )
         header = (IDAggregate.ARRAY + str(len(value))).encode() + REDIS_SEPARATOR
         data = [encode_redis(array_value, nil=nil) for array_value in value]
         return b"".join([header, *data])
     if isinstance(value, dict):
         if len(value) == 0:
-            return (IDAggregate.MAP + "-1").encode() + REDIS_SEPARATOR
+            if nil:
+                return (IDAggregate.MAP + "-1").encode() + REDIS_SEPARATOR
+            return (IDAggregate.MAP + "0").encode() + REDIS_SEPARATOR + REDIS_SEPARATOR
         header = (IDAggregate.MAP + str(len(value))).encode() + REDIS_SEPARATOR
         data = [encode_redis(k) + encode_redis(v, nil=nil) for k, v in value.items()]
         return b"".join([header, *data])
