@@ -78,3 +78,18 @@ def get_set_score(key: str, member: str) -> str:
         return ""
 
     return str(vdict[member])
+
+
+def remove_set_member(key: str, member: str) -> int:
+    logging.info("ZREM key '%s' member %s", key, member)
+    if not check_key(key):
+        return 0
+
+    vzset, _ = get_data(key)
+    vdict = dict(vzset["value"])
+    if member not in vdict:
+        return 0
+
+    del vdict[member]
+    set_data(key, list(vdict.items()), dtype=DBType.ZSET)
+    return 1
