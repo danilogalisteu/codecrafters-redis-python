@@ -5,6 +5,7 @@ from .database import (
     get_keys,
     get_list_length,
     get_list_values,
+    get_set_length,
     get_set_range,
     get_set_rank,
     get_stream_range,
@@ -403,6 +404,18 @@ async def handle_redis(
                 send_message = encode_redis(
                     get_set_range(arguments[0], start, end), nil=False
                 )
+        case "ZCARD":
+            if len(arguments) != 1:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'ZCARD' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(get_set_length(arguments[0]))
+                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
