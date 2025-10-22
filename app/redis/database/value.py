@@ -7,13 +7,13 @@ from .data import get_current_time, get_data, set_data
 
 def get_value(key: str) -> str | dict[str, str]:
     logging.info("GET key '%s'", key)
-    data, exp = get_data(key)
+    data, _ = get_data(key)
     return data.get("value", "")
 
 
 def increase_value(key: str) -> bytes:
     logging.info("INCR key '%s'")
-    data, exp = get_data(key)
+    data, _ = get_data(key)
     if not data:
         set_value(key, "1")
         return encode_redis(1)

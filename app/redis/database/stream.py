@@ -28,7 +28,7 @@ def get_stream_range(
     logging.info(
         "XRANGE key '%s' start %s end %s left_closed %s", key, start, end, left_closed
     )
-    data, exp = get_data(key)
+    data, _ = get_data(key)
     if not data:
         return ""
 

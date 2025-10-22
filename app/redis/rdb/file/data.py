@@ -33,7 +33,7 @@ def read_rdb_data(
     pos += 1
     num = buffer[pos]
     pos += 1
-    ssize, size_hash, size_exph = read_rdb_size(buffer[pos:])
+    ssize, _, _ = read_rdb_size(buffer[pos:])
     pos += ssize
 
     while True:
