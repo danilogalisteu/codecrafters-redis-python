@@ -56,3 +56,12 @@ def get_set_range(key: str, start: int, end: int) -> list[str]:
         end += 1
 
     return [v[0] for v in vzset["value"][start:end]]
+
+
+def get_set_length(key: str) -> int:
+    logging.info("ZCARD key '%s'", key)
+    if not check_key(key):
+        return 0
+
+    vzset, _ = get_data(key)
+    return len(vzset["value"])
