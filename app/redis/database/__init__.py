@@ -6,7 +6,7 @@ from .list import (
     pop_list_value,
     push_list_value,
 )
-from .set import set_set_value
+from .set import set_get_rank, set_set_value
 from .stream import get_stream_range, get_stream_values, set_stream_value
 from .value import get_value, increase_value, set_value
 
@@ -25,6 +25,7 @@ __all__ = [
     "push_list_value",
     "read_db",
     "save_db",
+    "set_get_rank",
     "set_set_value",
     "set_stream_value",
     "set_value",

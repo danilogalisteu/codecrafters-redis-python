@@ -22,3 +22,16 @@ def set_set_value(key: str, values: dict[str, float]) -> int:
     )
     set_data(key, sorted_values, dtype=DBType.ZSET)
     return len(sorted_values) - len(vzset["value"])
+
+
+def set_get_rank(key: str, member: str) -> int | str:
+    logging.info("ZRANK key '%s' member %s", key, member)
+    if not check_key(key):
+        return ""
+
+    vzset, _ = get_data(key)
+    vdict = dict(vzset["value"])
+    if member not in vdict:
+        return ""
+
+    return list(vdict).index(member)
