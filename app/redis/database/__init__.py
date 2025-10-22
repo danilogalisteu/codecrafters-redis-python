@@ -1,5 +1,5 @@
 from .data import get_keys, get_type, load_db, read_db, save_db, write_db
-from .geo import set_geo_value
+from .geo import get_geo_value, set_geo_value
 from .list import (
     get_list_length,
     get_list_values,
@@ -19,6 +19,7 @@ from .zset import (
 )
 
 __all__ = [
+    "get_geo_value",
     "get_keys",
     "get_list_length",
     "get_list_values",

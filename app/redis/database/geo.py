@@ -1,6 +1,7 @@
 import logging
 
-from .zset import set_zset_value
+from .data import check_key
+from .zset import get_zset_score, set_zset_value
 
 MIN_LATITUDE = -85.05112878
 MAX_LATITUDE = 85.05112878
@@ -34,3 +35,12 @@ def set_geo_value(key: str, values: dict[str, tuple[float]]) -> int:
     scores = {place: encode_geo(*coords) for place, coords in values.items()}
     set_zset_value(key, scores)
     return len(scores)
+
+
+def get_geo_value(key: str, places: list[str]) -> list[tuple[float]]:
+    logging.info("GEOPOS key '%s' places %s", key, places)
+    if not check_key(key):
+        return [[] for _ in places]
+
+    scores = {place: get_zset_score(key, place) for place in places}
+    return [["0.0", "0.0"] if score else [] for place, score in scores.items()]

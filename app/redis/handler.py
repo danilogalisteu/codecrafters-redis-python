@@ -2,6 +2,7 @@ import logging
 
 from .config import get_config, set_config
 from .database import (
+    get_geo_value,
     get_keys,
     get_list_length,
     get_list_values,
@@ -479,6 +480,18 @@ async def handle_redis(
                             )
                         )
                         send_replica = encode_redis(command_line)
+        case "GEOPOS":
+            if len(arguments) < 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'GEOPOS' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(get_geo_value(arguments[0], arguments[1:]))
+                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
