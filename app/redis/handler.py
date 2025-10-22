@@ -455,8 +455,25 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(1)
-                send_replica = encode_redis(command_line)
+                try:
+                    longitude = float(arguments[1])
+                    latitude = float(arguments[2])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument type for 'GEOADD' command", True
+                    )
+                else:
+                    if abs(longitude) > 180.0:
+                        send_message = encode_simple(
+                            "ERR invalid longitude argument for 'GEOADD' command", True
+                        )
+                    elif abs(latitude) > 85.05112878:
+                        send_message = encode_simple(
+                            "ERR invalid latitude argument for 'GEOADD' command", True
+                        )
+                    else:
+                        send_message = encode_redis(1)
+                        send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
