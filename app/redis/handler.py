@@ -403,9 +403,10 @@ async def handle_redis(
                     send_message = encode_simple(
                         "ERR invalid argument for 'ZRANGE' command", True
                     )
-                send_message = encode_redis(
-                    get_zset_range(arguments[0], start, end), nil=False
-                )
+                else:
+                    send_message = encode_redis(
+                        get_zset_range(arguments[0], start, end), nil=False
+                    )
         case "ZSCORE":
             if len(arguments) != 2:
                 send_message = encode_simple(
