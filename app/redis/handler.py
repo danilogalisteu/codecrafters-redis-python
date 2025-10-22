@@ -8,6 +8,7 @@ from .database import (
     get_set_length,
     get_set_range,
     get_set_rank,
+    get_set_score,
     get_stream_range,
     get_stream_values,
     get_type,
@@ -404,6 +405,18 @@ async def handle_redis(
                 send_message = encode_redis(
                     get_set_range(arguments[0], start, end), nil=False
                 )
+        case "ZSCORE":
+            if len(arguments) != 2:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'ZSCORE' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(get_set_score(arguments[0], arguments[1]))
+                send_replica = encode_redis(command_line)
         case "ZCARD":
             if len(arguments) != 1:
                 send_message = encode_simple(
