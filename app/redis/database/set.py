@@ -45,12 +45,15 @@ def get_set_range(key: str, start: int, end: int) -> list[str]:
 
     vzset, _ = get_data(key)
     len_vzset = len(vzset["value"])
-    if start >= len_vzset or start > end:
+    if start >= len_vzset or (end >= 0 and start > end):
         return []
 
     if end > len_vzset:
         end = len_vzset
+    elif end == -1:
+        end = None
     else:
         end += 1
 
+    print(vzset["value"])
     return [v[0] for v in vzset["value"][start : end]]
