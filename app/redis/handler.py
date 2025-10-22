@@ -19,6 +19,7 @@ from .database import (
     push_list_value,
     remove_zset_member,
     save_db,
+    set_geo_value,
     set_stream_value,
     set_value,
     set_zset_value,
@@ -472,7 +473,12 @@ async def handle_redis(
                             "ERR invalid latitude argument for 'GEOADD' command", True
                         )
                     else:
-                        send_message = encode_redis(1)
+                        send_message = encode_redis(
+                            set_geo_value(
+                                arguments[0],
+                                {arguments[3]: (arguments[1], arguments[2])},
+                            )
+                        )
                         send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
