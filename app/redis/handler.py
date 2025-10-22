@@ -215,7 +215,7 @@ async def handle_redis(
                     )
                 else:
                     send_message = encode_redis(
-                        get_list_values(arguments[0], start, end)
+                        get_list_values(arguments[0], start, end), nil=False
                     )
         case "LLEN":
             if len(arguments) != 1:
