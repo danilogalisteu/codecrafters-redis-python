@@ -14,6 +14,7 @@ from .database import (
     pop_list_value,
     push_list_value,
     save_db,
+    set_set_value,
     set_stream_value,
     set_value,
 )
@@ -354,6 +355,19 @@ async def handle_redis(
                     send_message = encode_simple(
                         f"ERR unhandled option {arguments[0]}", True
                     )
+        case "ZADD":
+            if (len(arguments) < 3) or (len(arguments) % 2 != 1):
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'ZADD' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                values = dict(zip(arguments[2::2], arguments[1::2], strict=True))
+                send_message = encode_redis(set_set_value(arguments[0], values))
+                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
