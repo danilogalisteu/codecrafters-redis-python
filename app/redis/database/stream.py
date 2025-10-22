@@ -91,7 +91,7 @@ async def get_stream_values(
         if block_time > 0:
             break
 
-    return data if len(data) > 0 else ""
+    return data
 
 
 def set_stream_value(key: str, kid: str, values: dict[str, str]) -> bytes:
