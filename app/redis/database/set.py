@@ -36,3 +36,21 @@ def get_set_rank(key: str, member: str) -> int | str:
         return ""
 
     return list(vdict).index(member)
+
+
+def get_set_range(key: str, start: int, end: int) -> list[str]:
+    logging.info("ZRANGE key '%s' start %d end %d", key, start, end)
+    if not check_key(key):
+        return []
+
+    vzset, _ = get_data(key)
+    len_vzset = len(vzset["value"])
+    if start >= len_vzset or start > end:
+        return []
+
+    if end > len_vzset:
+        end = len_vzset
+    else:
+        end += 1
+
+    return [v[0] for v in vzset["value"][start : end]]
