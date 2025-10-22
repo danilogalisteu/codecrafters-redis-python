@@ -1,4 +1,5 @@
 from .data import get_keys, get_type, load_db, read_db, save_db, write_db
+from .geo import set_geo_value
 from .list import (
     get_list_length,
     get_list_values,
@@ -37,6 +38,7 @@ __all__ = [
     "read_db",
     "remove_zset_member",
     "save_db",
+    "set_geo_value",
     "set_stream_value",
     "set_value",
     "set_zset_value",
