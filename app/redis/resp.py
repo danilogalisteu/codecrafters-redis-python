@@ -188,9 +188,7 @@ def encode_redis(value: Any, nil: bool = True) -> bytes:
         if len(value) == 0:
             if nil:
                 return (IDAggregate.ARRAY + "-1").encode() + REDIS_SEPARATOR
-            return (
-                (IDAggregate.ARRAY + "0").encode() + REDIS_SEPARATOR
-            )
+            return (IDAggregate.ARRAY + "0").encode() + REDIS_SEPARATOR
         header = (IDAggregate.ARRAY + str(len(value))).encode() + REDIS_SEPARATOR
         data = [encode_redis(array_value, nil=nil) for array_value in value]
         return b"".join([header, *data])
