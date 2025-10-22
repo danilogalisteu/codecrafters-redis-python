@@ -65,3 +65,16 @@ def get_set_length(key: str) -> int:
 
     vzset, _ = get_data(key)
     return len(vzset["value"])
+
+
+def get_set_score(key: str, member: str) -> str:
+    logging.info("ZSCORE key '%s' member %s", key, member)
+    if not check_key(key):
+        return ""
+
+    vzset, _ = get_data(key)
+    vdict = dict(vzset["value"])
+    if member not in vdict:
+        return ""
+
+    return str(vdict[member])

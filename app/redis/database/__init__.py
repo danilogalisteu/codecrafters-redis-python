@@ -6,7 +6,7 @@ from .list import (
     pop_list_value,
     push_list_value,
 )
-from .set import get_set_length, get_set_range, get_set_rank, set_set_value
+from .set import get_set_length, get_set_range, get_set_rank, get_set_score, set_set_value
 from .stream import get_stream_range, get_stream_values, set_stream_value
 from .value import get_value, increase_value, set_value
 
@@ -17,6 +17,7 @@ __all__ = [
     "get_set_length",
     "get_set_range",
     "get_set_rank",
+    "get_set_score",
     "get_stream_range",
     "get_stream_values",
     "get_type",
