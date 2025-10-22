@@ -55,7 +55,7 @@ def set_geo_value(key: str, values: dict[str, tuple[float]]) -> int:
     return len(scores)
 
 
-def get_geo_value(key: str, places: list[str]) -> list[tuple[float]]:
+def get_geo_value(key: str, places: list[str]) -> list[tuple[str]]:
     logging.info("GEOPOS key '%s' places %s", key, places)
     if not check_key(key):
         return [[] for _ in places]
