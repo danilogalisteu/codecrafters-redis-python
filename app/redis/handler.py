@@ -367,7 +367,9 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                values = dict(zip(arguments[2::2], arguments[1::2], strict=True))
+                values = dict(
+                    zip(arguments[2::2], map(float, arguments[1::2]), strict=True)
+                )
                 send_message = encode_redis(set_set_value(arguments[0], values))
                 send_replica = encode_redis(command_line)
         case "ZRANK":
