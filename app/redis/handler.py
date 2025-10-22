@@ -475,8 +475,7 @@ async def handle_redis(
                     else:
                         send_message = encode_redis(
                             set_geo_value(
-                                arguments[0],
-                                {arguments[3]: (arguments[1], arguments[2])},
+                                arguments[0], {arguments[3]: (longitude, latitude)}
                             )
                         )
                         send_replica = encode_redis(command_line)
