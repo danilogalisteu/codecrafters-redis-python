@@ -444,6 +444,18 @@ async def handle_redis(
                     remove_zset_member(arguments[0], arguments[1])
                 )
                 send_replica = encode_redis(command_line)
+        case "GEOADD":
+            if len(arguments) != 4:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'GEOADD' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(1)
+                send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
