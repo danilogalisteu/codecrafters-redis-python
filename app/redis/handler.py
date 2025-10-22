@@ -5,6 +5,7 @@ from .database import (
     get_keys,
     get_list_length,
     get_list_values,
+    get_set_rank,
     get_stream_range,
     get_stream_values,
     get_type,
@@ -14,7 +15,6 @@ from .database import (
     pop_list_value,
     push_list_value,
     save_db,
-    set_get_rank,
     set_set_value,
     set_stream_value,
     set_value,
@@ -379,7 +379,7 @@ async def handle_redis(
                 send_message = encode_simple("QUEUED")
                 send_replica = encode_redis(command_line)
             else:
-                send_message = encode_redis(set_get_rank(arguments[0], arguments[1]))
+                send_message = encode_redis(get_set_rank(arguments[0], arguments[1]))
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:

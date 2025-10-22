@@ -25,7 +25,7 @@ def set_set_value(key: str, values: dict[str, float]) -> int:
     return len(sorted_values) - len(vzset["value"])
 
 
-def set_get_rank(key: str, member: str) -> int | str:
+def get_set_rank(key: str, member: str) -> int | str:
     logging.info("ZRANK key '%s' member %s", key, member)
     if not check_key(key):
         return ""
