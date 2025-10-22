@@ -5,6 +5,7 @@ from .database import (
     get_keys,
     get_list_length,
     get_list_values,
+    get_set_range,
     get_set_rank,
     get_stream_range,
     get_stream_values,
@@ -381,6 +382,25 @@ async def handle_redis(
             else:
                 send_message = encode_redis(get_set_rank(arguments[0], arguments[1]))
                 send_replica = encode_redis(command_line)
+        case "ZRANGE":
+            if len(arguments) < 3:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'ZRANGE' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+            else:
+                try:
+                    start = int(arguments[1])
+                    end = int(arguments[2])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument for 'ZRANGE' command", True
+                    )
+                send_message = encode_redis(
+                    get_set_range(arguments[0], start, end), nil=False
+                )
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
