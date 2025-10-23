@@ -1,7 +1,10 @@
 import logging
+from math import asin, cos, radians, sin, sqrt
 
 from .data import check_key
 from .zset import get_zset_score, set_zset_value
+
+EARTH_RADIUS = 6372797.560856
 
 MIN_LATITUDE = -85.05112878
 MAX_LATITUDE = 85.05112878
@@ -46,6 +49,15 @@ def decode_geo(score: int) -> tuple[float]:
     longitude = (normalized_longitude / 2**26) * LONGITUDE_RANGE + MIN_LONGITUDE
     latitude = (normalized_latitude / 2**26) * LATITUDE_RANGE + MIN_LATITUDE
     return longitude, latitude
+
+
+def calculate_distance(score1: int, score2: int) -> float:
+    lon1, lat1 = map(radians, decode_geo(score1))
+    lon2, lat2 = map(radians, decode_geo(score2))
+    sq_sin_half_lon_diff = sin((lon2 - lon1) / 2) ** 2
+    sq_sin_half_lat_diff = sin((lat2 - lat1) / 2) ** 2
+    a = sq_sin_half_lat_diff + cos(lat1) * cos(lat2) * sq_sin_half_lon_diff
+    return 2 * EARTH_RADIUS * asin(sqrt(a))
 
 
 def set_geo_value(key: str, values: dict[str, tuple[float]]) -> int:
