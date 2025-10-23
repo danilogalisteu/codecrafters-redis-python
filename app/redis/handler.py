@@ -2,6 +2,7 @@ import logging
 
 from .config import get_config, set_config
 from .database import (
+    get_geo_distance,
     get_geo_value,
     get_keys,
     get_list_length,
@@ -491,6 +492,20 @@ async def handle_redis(
                 send_replica = encode_redis(command_line)
             else:
                 send_message = encode_redis(get_geo_value(arguments[0], arguments[1:]))
+                send_replica = encode_redis(command_line)
+        case "GEODIST":
+            if len(arguments) != 3:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'GEODIST' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            else:
+                send_message = encode_redis(
+                    get_geo_distance(arguments[0], arguments[1], arguments[2])
+                )
                 send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
