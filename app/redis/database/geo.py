@@ -77,3 +77,16 @@ def get_geo_value(key: str, places: list[str]) -> list[tuple[str]]:
         list(map(str, decode_geo(int(float(score))))) if score else []
         for place, score in scores.items()
     ]
+
+
+def get_geo_distance(key: str, place1: str, place2: str) -> str:
+    logging.info("GEODIST key '%s' place1 %s place2 %s", key, place1, place2)
+    if not check_key(key):
+        return ""
+
+    score1 = get_zset_score(key, place1)
+    score2 = get_zset_score(key, place2)
+    if not score1 or not score2:
+        return ""
+
+    return str(calculate_distance(int(float(score1)), int(float(score2))))
