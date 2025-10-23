@@ -2,7 +2,7 @@ import logging
 from math import asin, cos, radians, sin, sqrt
 
 from .data import check_key
-from .zset import get_zset_score, set_zset_value
+from .zset import get_zset_range, get_zset_score, set_zset_value
 
 EARTH_RADIUS = 6372797.560856
 
@@ -13,6 +13,13 @@ MAX_LONGITUDE = 180
 
 LATITUDE_RANGE = MAX_LATITUDE - MIN_LATITUDE
 LONGITUDE_RANGE = MAX_LONGITUDE - MIN_LONGITUDE
+
+DISTANCE_UNITS = {
+    "m": 1.0,
+    "km": 1000.0,
+    "mi": 1609.344,
+    "ft": 0.3048,
+}
 
 
 def spread_int32_to_int64(v: int) -> int:
@@ -96,3 +103,38 @@ def get_geo_distance(key: str, place1: str, place2: str) -> str:
             *decode_geo(int(float(score2))),
         )
     )
+
+
+def get_geo_closest(
+    key: str,
+    longitude: float,
+    latitude: float,
+    radius: float,
+    unit: str,
+) -> list[str]:
+    logging.info(
+        "GEOSEARCH key '%s' longitude %s latitude %s radius %s unit '%s'",
+        key,
+        longitude,
+        latitude,
+        radius,
+        unit,
+    )
+    if not check_key(key):
+        return []
+
+    places = get_zset_range(key, 0, -1)
+    scores = {place: int(float(get_zset_score(key, place))) for place in places}
+    distances = {
+        place: haversine(
+            longitude,
+            latitude,
+            *decode_geo(scores[place]),
+        )
+        for place in places
+    }
+
+    distance_limit = radius * DISTANCE_UNITS[unit.lower()]
+    return [
+        place for place, distance in distances.items() if distance <= distance_limit
+    ]
