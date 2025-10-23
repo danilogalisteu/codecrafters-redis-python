@@ -2,6 +2,7 @@ import logging
 
 from .config import get_config, set_config
 from .database import (
+    get_geo_closest,
     get_geo_distance,
     get_geo_value,
     get_keys,
@@ -507,6 +508,43 @@ async def handle_redis(
                     get_geo_distance(arguments[0], arguments[1], arguments[2])
                 )
                 send_replica = encode_redis(command_line)
+        case "GEOSEARCH":
+            if len(arguments) < 7:
+                send_message = encode_simple(
+                    "ERR wrong number of arguments for 'GEOSEARCH' command", True
+                )
+            elif multi_state:
+                multi_commands.append(command_line)
+                send_message = encode_simple("QUEUED")
+                send_replica = encode_redis(command_line)
+            elif arguments[1].upper() != "FROMLONLAT":
+                send_message = encode_simple(
+                    f"ERR unsupported option '{arguments[1].upper()}' for 'GEOSEARCH' command",
+                    True,
+                )
+            elif arguments[4].upper() != "BYRADIUS":
+                send_message = encode_simple(
+                    f"ERR unsupported option '{arguments[4].upper()}' for 'GEOSEARCH' command",
+                    True,
+                )
+            else:
+                try:
+                    longitude = float(arguments[2])
+                    latitude = float(arguments[3])
+                    radius = float(arguments[5])
+                except ValueError:
+                    send_message = encode_simple(
+                        "ERR invalid argument type for 'GEOSEARCH' command",
+                        True,
+                    )
+                else:
+                    key = arguments[0]
+                    unit = arguments[6]
+                    send_message = encode_redis(
+                        get_geo_closest(key, longitude, latitude, radius, unit),
+                        nil=False,
+                    )
+                    send_replica = encode_redis(command_line)
         case "CONFIG":
             if len(arguments) < 1:
                 send_message = encode_simple(
