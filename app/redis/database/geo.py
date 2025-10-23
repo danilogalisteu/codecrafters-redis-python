@@ -51,12 +51,13 @@ def decode_geo(score: int) -> tuple[float]:
     return longitude, latitude
 
 
-def calculate_distance(score1: int, score2: int) -> float:
-    lon1, lat1 = map(radians, decode_geo(score1))
-    lon2, lat2 = map(radians, decode_geo(score2))
-    sq_sin_half_lon_diff = sin((lon2 - lon1) / 2) ** 2
-    sq_sin_half_lat_diff = sin((lat2 - lat1) / 2) ** 2
-    a = sq_sin_half_lat_diff + cos(lat1) * cos(lat2) * sq_sin_half_lon_diff
+def haversine(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
+    sq_sin_half_lon_diff = sin(radians(lon2 - lon1) / 2) ** 2
+    sq_sin_half_lat_diff = sin(radians(lat2 - lat1) / 2) ** 2
+    a = (
+        sq_sin_half_lat_diff
+        + cos(radians(lat1)) * cos(radians(lat2)) * sq_sin_half_lon_diff
+    )
     return 2 * EARTH_RADIUS * asin(sqrt(a))
 
 
@@ -89,4 +90,9 @@ def get_geo_distance(key: str, place1: str, place2: str) -> str:
     if not score1 or not score2:
         return ""
 
-    return str(calculate_distance(int(float(score1)), int(float(score2))))
+    return str(
+        haversine(
+            *decode_geo(int(float(score1))),
+            *decode_geo(int(float(score2))),
+        )
+    )
